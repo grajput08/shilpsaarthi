@@ -1,8 +1,20 @@
-# ShilpSaarthi — Cloud Supabase Deployment
+# ShilpSaarthi — Cloud Deployment
 
 A hosted Supabase project was provisioned and the full schema + seed deployed to
-it. The local stack still works for development; the **production build** points
-at the cloud project.
+it, and the app is deployed to Vercel. The local stack still works for
+development; the **production build** points at the cloud project.
+
+## Live
+
+| | |
+|---|---|
+| App (Vercel) | https://shilpsaarthi.vercel.app |
+| Vercel project | `gatik-abm/shilpsaarthi` |
+| GitHub repo | https://github.com/grajput08/shilpsaarthi (public) |
+
+Production env vars set on Vercel (encrypted): `NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DEMO_USER_PASSWORD`.
+Redeploy with `vercel deploy --prod --scope gatik-abm`.
 
 ## Project
 

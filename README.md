@@ -2,6 +2,8 @@
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fgrajput08%2Fshilpsaarthi&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,DEMO_USER_PASSWORD&envDescription=Supabase%20cloud%20URL%2Fkeys%20%2B%20demo%20password&envLink=https%3A%2F%2Fgithub.com%2Fgrajput08%2Fshilpsaarthi%2Fblob%2Fmain%2Fdocs%2FCLOUD_DEPLOYMENT.md)
 
+**Live demo:** https://shilpsaarthi.vercel.app · **Repo:** https://github.com/grajput08/shilpsaarthi
+
 Identify, onboard, verify and manage tribal artisans — a verified registry with
 photos, craft details, location, documents, products and verification status.
 
