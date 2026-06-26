@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+  font-family: var(--font-sans);
+}
+
+/* Larger, finger-friendly controls on the field PWA. */
+.pwa input,
+.pwa select,
+.pwa textarea {
+  @apply text-base;
+  min-height: 48px;
+}
+
+.pwa button {
+  min-height: 48px;
+}
