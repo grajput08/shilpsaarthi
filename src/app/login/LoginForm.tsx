@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useFormState, useFormStatus } from 'react-dom';
 import { signIn, type LoginState } from './actions';
-import { User, Mail, Lock, Eye, EyeOff, Smartphone, ChevronDown } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, ChevronDown } from 'lucide-react';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -84,15 +83,10 @@ export default function LoginForm() {
         </button>
       </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2 text-slate-600">
-          <input type="checkbox" name="remember" defaultChecked className="h-4 w-4 accent-[#FF671F]" />
-          Remember me
-        </label>
-        <a href="mailto:support@adisetu.gov.in" className="font-medium text-[#0F7A06] hover:underline">
-          Forgot Password?
-        </a>
-      </div>
+      <label className="flex items-center gap-2 text-sm text-slate-600">
+        <input type="checkbox" name="remember" defaultChecked className="h-4 w-4 accent-[#FF671F]" />
+        Remember me
+      </label>
 
       {state.error ? (
         <p data-testid="login-error" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -101,24 +95,6 @@ export default function LoginForm() {
       ) : null}
 
       <SubmitButton />
-
-      <div className="flex items-center gap-3 py-1">
-        <span className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs text-slate-400">or</span>
-        <span className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      <Link
-        href="/verifier/login"
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#0F7A06] px-4 py-2.5 text-sm font-semibold text-[#0F7A06] transition-colors hover:bg-[#0F7A06]/5"
-      >
-        <Smartphone className="h-4 w-4" />
-        Login with OTP (Mobile)
-      </Link>
-
-      <p className="pt-1 text-center text-xs text-slate-500">
-        Need help? <span className="font-semibold text-[#FF671F]">Contact Support</span>
-      </p>
     </form>
   );
 }
