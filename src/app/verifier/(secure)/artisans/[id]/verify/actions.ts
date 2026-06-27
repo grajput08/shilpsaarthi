@@ -91,12 +91,20 @@ export async function submitVerification(payload: VerificationSubmitInput): Prom
           continue;
         }
         const decoded = decodeDataUrl(raw);
-        if (!decoded) continue;
+        if (!decoded) {
+          return { ok: false, error: 'A product photo could not be read. Please recapture and try again.' };
+        }
         const path = `${input.artisan_id}/product-${Date.now()}-${pi}-${i}.${decoded.ext}`;
         const { error: upErr } = await supabase.storage
           .from('artisan-photos')
           .upload(path, decoded.buffer, { contentType: decoded.contentType, upsert: true });
-        if (!upErr) prodPhotoPaths.push(path);
+        if (upErr) {
+          return {
+            ok: false,
+            error: `Could not upload product photo: ${upErr.message}. Check that you are assigned to this artisan.`,
+          };
+        }
+        prodPhotoPaths.push(path);
       }
       const row = {
         artisan_id: input.artisan_id,
@@ -125,19 +133,32 @@ export async function submitVerification(payload: VerificationSubmitInput): Prom
 
   // 2. Upload any captured evidence photos.
   const photoPaths: string[] = [];
+  let pendingUploads = 0;
   for (let i = 0; i < (input.photo_paths ?? []).length; i++) {
     const raw = input.photo_paths![i];
     if (!raw.startsWith('data:')) {
       photoPaths.push(raw);
       continue;
     }
+    pendingUploads += 1;
     const decoded = decodeDataUrl(raw);
-    if (!decoded) continue;
+    if (!decoded) {
+      return { ok: false, error: 'One of the photos could not be read. Please recapture and try again.' };
+    }
     const path = `${input.artisan_id}/verify-${Date.now()}-${i}.${decoded.ext}`;
     const { error: upErr } = await supabase.storage
       .from('artisan-photos')
       .upload(path, decoded.buffer, { contentType: decoded.contentType, upsert: true });
-    if (!upErr) photoPaths.push(path);
+    if (upErr) {
+      return {
+        ok: false,
+        error: `Could not upload photo: ${upErr.message}. Check that you are assigned to this artisan.`,
+      };
+    }
+    photoPaths.push(path);
+  }
+  if (pendingUploads > 0 && photoPaths.length === 0) {
+    return { ok: false, error: 'No photos could be uploaded. Please recapture and try again.' };
   }
 
   const statusOf = (key: string) => input.items.find((it) => it.item_key === key)?.status;

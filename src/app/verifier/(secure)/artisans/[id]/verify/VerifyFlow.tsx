@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button, FormRow, Input, Select } from '@/components/ui';
 import { GENDER, VERIFICATION_DECISION, type CraftCategory, type Gender } from '@/lib/domain';
 import { saveDraft, loadDraft, deleteDraft } from '@/lib/field/drafts';
+import { compressImageFile } from '@/lib/image-compress';
 import { submitVerification } from './actions';
 import {
   validateAll,
@@ -298,33 +299,41 @@ export default function VerifyFlow({
     );
   }
 
+  async function readCompressedPhoto(file: File): Promise<string> {
+    try {
+      return await compressImageFile(file);
+    } catch {
+      throw new Error('Could not process the photo. Try a smaller image or a different file.');
+    }
+  }
+
   async function onPhotos(files: FileList | null, target: 'evidence' | 'live' | 'landmark' | 'craft') {
     if (!files?.[0]) return;
-    const readOne = (f: File) =>
-      new Promise<string>((resolve) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result as string);
-        r.readAsDataURL(f);
-      });
-    if (target === 'evidence' && files.length > 1) {
-      const urls = await Promise.all(Array.from(files).slice(0, 4).map(readOne));
-      setPhotos((p) => [...p, ...urls].slice(0, 8));
-      return;
+    try {
+      if (target === 'evidence' && files.length > 1) {
+        const urls = await Promise.all(Array.from(files).slice(0, 4).map(readCompressedPhoto));
+        setPhotos((p) => [...p, ...urls].slice(0, 8));
+        return;
+      }
+      const url = await readCompressedPhoto(files[0]);
+      if (target === 'live') setLivePhoto(url);
+      else if (target === 'landmark') setPhotos((p) => [url, ...p].slice(0, 8));
+      else if (target === 'craft') setCraftPhotos((p) => [...p, url].slice(0, 3));
+      else setPhotos((p) => [...p, url].slice(0, 8));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add photo.');
     }
-    const url = await readOne(files[0]);
-    if (target === 'live') setLivePhoto(url);
-    else if (target === 'landmark') setPhotos((p) => [url, ...p].slice(0, 8));
-    else if (target === 'craft') setCraftPhotos((p) => [...p, url].slice(0, 3));
-    else setPhotos((p) => [...p, url].slice(0, 8));
   }
 
   async function onProductPhoto(productId: string, files: FileList | null) {
     if (!files?.[0]) return;
-    const url = await new Promise<string>((resolve) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result as string);
-      r.readAsDataURL(files[0]);
-    });
+    let url: string;
+    try {
+      url = await readCompressedPhoto(files[0]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add product photo.');
+      return;
+    }
     setProducts((list) =>
       list.map((p) => (p.id === productId ? { ...p, photo_paths: [...p.photo_paths, url].slice(0, 5) } : p)),
     );
@@ -480,8 +489,12 @@ export default function VerifyFlow({
       }
       deleteDraft(artisan.id);
       setDone(true);
-    } catch {
-      setError('Network error. Saved to the sync queue — retry from the Sync tab.');
+    } catch (err) {
+      const msg =
+        err instanceof Error && /body exceeded|413|payload/i.test(err.message)
+          ? 'Photos are too large to upload in one go. Remove a photo or retake with lower resolution, then submit again.'
+          : 'Network error. Saved to the sync queue — retry from the Sync tab.';
+      setError(msg);
       setSubmitting(false);
     }
   }
