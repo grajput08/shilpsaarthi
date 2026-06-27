@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/cn';
-import { LayoutDashboard, Users, ClipboardList, UserCog, Copy } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, Copy } from 'lucide-react';
 
 const items = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/admin/registry', label: 'Artisan Registry', icon: Users },
-  { href: '/admin/queue', label: 'Verification Queue', icon: ClipboardList },
+  // { href: '/admin/queue', label: 'Verification Queue', icon: ClipboardList },
   { href: '/admin/team', label: 'Field Team', icon: UserCog },
   { href: '/admin/duplicates', label: 'Duplicates', icon: Copy },
 ];

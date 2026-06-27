@@ -37,9 +37,9 @@ export default async function LoginPage() {
             Tribal Artisans.
           </h1>
           <p className="mt-3 hidden text-2xl font-bold lg:block">
-            <span className="text-[#FF671F]">Preserve.</span>{' '}
+            <span className="text-brand-400">Preserve.</span>{' '}
             <span className="text-white">Promote.</span>{' '}
-            <span className="text-[#5fd957]">Prosper.</span>
+            <span className="text-india-400">Prosper.</span>
           </p>
           <p className="mt-3 hidden max-w-md text-sm text-white/80 lg:block">
             One Platform. One Identity. Infinite Possibilities.
@@ -50,7 +50,7 @@ export default async function LoginPage() {
               const Icon = v.icon;
               return (
                 <div key={v.title} className="text-white/90">
-                  <Icon className="h-5 w-5 text-[#ffb98a]" />
+                  <Icon className="h-5 w-5 text-brand-300" />
                   <p className="mt-1.5 text-sm font-semibold">{v.title}</p>
                   <p className="text-xs text-white/70">{v.sub}</p>
                 </div>
@@ -60,9 +60,9 @@ export default async function LoginPage() {
         </div>
         {/* tricolour strip */}
         <div className="relative z-10 grid grid-cols-3">
-          <div className="h-1.5 bg-[#FF671F]" />
+          <div className="h-1.5 bg-saffron-500" />
           <div className="h-1.5 bg-white" />
-          <div className="h-1.5 bg-[#0F7A06]" />
+          <div className="h-1.5 bg-india-600" />
         </div>
       </section>
 
@@ -72,16 +72,16 @@ export default async function LoginPage() {
           {/* Government identity */}
           <div className="text-center">
             <IllustrativeEmblem className="mx-auto h-14 w-14" />
-            <p className="mt-1 text-sm font-bold tracking-wide text-[#FF671F]">BHARAT</p>
+            <p className="mt-1 text-sm font-bold tracking-wide text-brand-600">BHARAT</p>
             <p className="text-xs text-slate-600">Government of India (illustrative)</p>
-            <p className="text-sm font-semibold text-[#0F7A06]">Ministry of Tribal Affairs</p>
+            <p className="text-sm font-semibold text-india-600">Ministry of Tribal Affairs</p>
           </div>
 
           {/* Adi Setu brand */}
           <div className="mt-5 flex flex-col items-center">
             <AdiSetuLogo className="h-16 w-20" />
             <p className="mt-1 text-3xl font-extrabold">
-              <span className="text-[#FF671F]">Adi</span> <span className="text-[#0F7A06]">Setu</span>
+              <span className="text-brand-600">Adi</span> <span className="text-brand-400">Setu</span>
             </p>
             <p className="text-sm font-medium text-slate-500">One identity. One bridge.</p>
           </div>
@@ -97,11 +97,11 @@ export default async function LoginPage() {
           <p className="mt-5 text-center text-xs text-slate-500">
             © 2026 <span className="font-semibold text-slate-700">Adi Setu</span>. All rights reserved.
             <br />
-            Designed for Tribal Artisans · <span className="font-medium text-[#0F7A06]">By Bharat</span>
+            Designed for Tribal Artisans · <span className="font-medium text-india-600">By Bharat</span>
           </p>
           <p className="mt-2 text-center text-xs text-slate-400">
             Field verifier?{' '}
-            <Link href="/verifier/login" className="font-medium text-[#0F7A06] hover:underline">
+            <Link href="/verifier/login" className="font-medium text-india-600 hover:underline">
               Use the verifier app login
             </Link>
           </p>

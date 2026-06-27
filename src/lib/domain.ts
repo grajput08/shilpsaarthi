@@ -1,4 +1,5 @@
 import type { Database } from './supabase/database.types';
+import { BRAND_SHADES, INDIA_GREEN, SAFFRON } from './theme';
 
 export type Enums = Database['public']['Enums'];
 export type ArtisanStatus = Enums['artisan_status'];
@@ -79,21 +80,22 @@ export const REGISTRATION_SOURCE: Record<RegistrationSource, string> = {
   campaign: 'Campaign',
 };
 
+
 /** Onboarding channels shown on the admin dashboard donut chart. */
 export const ONBOARDING_CHANNEL = {
   assisted: {
     label: 'Assisted',
-    color: '#1a3b70',
+    color: SAFFRON,
     sources: ['public_link', 'admin_manual', 'ngo', 'campaign', 'csv_import'] as RegistrationSource[],
   },
   ivr: {
     label: 'IVR',
-    color: '#ff671f',
+    color: INDIA_GREEN,
     sources: ['call_center'] as RegistrationSource[],
   },
   whatsapp: {
     label: 'WhatsApp',
-    color: '#0f7a06',
+    color: BRAND_SHADES[800],
     sources: ['whatsapp_self'] as RegistrationSource[],
   },
 } as const;

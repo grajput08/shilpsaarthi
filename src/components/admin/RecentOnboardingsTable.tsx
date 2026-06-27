@@ -42,7 +42,7 @@ export default function RecentOnboardingsTable({
               {rows.map((r) => (
                 <tr key={r.id} className="text-slate-700">
                   <td className="py-3 pr-4">
-                    <Link href={`/admin/registry/${r.id}`} className="font-medium text-[#1a3b70] hover:underline">
+                    <Link href={`/admin/registry/${r.id}`} className="font-medium text-brand-700 hover:text-brand-800 hover:underline">
                       {r.artisanCode ?? '—'}
                     </Link>
                   </td>

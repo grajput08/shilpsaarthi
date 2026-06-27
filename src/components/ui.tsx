@@ -1,13 +1,15 @@
 import * as React from 'react';
 import { cn } from '@/lib/cn';
 
-type Tone = 'gray' | 'blue' | 'amber' | 'green' | 'red' | 'purple' | 'teal';
+type Tone = 'gray' | 'blue' | 'brand' | 'amber' | 'saffron' | 'green' | 'red' | 'purple' | 'teal';
 
 const toneClasses: Record<Tone, string> = {
   gray: 'bg-slate-100 text-slate-700 ring-slate-200',
   blue: 'bg-blue-50 text-blue-700 ring-blue-200',
+  brand: 'bg-brand-50 text-brand-700 ring-brand-200',
   amber: 'bg-amber-50 text-amber-800 ring-amber-200',
-  green: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  green: 'bg-india-50 text-india-700 ring-india-200',
+  saffron: 'bg-saffron-50 text-saffron-700 ring-saffron-200',
   red: 'bg-red-50 text-red-700 ring-red-200',
   purple: 'bg-purple-50 text-purple-700 ring-purple-200',
   teal: 'bg-teal-50 text-teal-700 ring-teal-200',
@@ -80,7 +82,7 @@ export function CardHeader({
   return (
     <div className={cn('flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4', className)}>
       <div>
-        <h3 className="text-sm font-bold tracking-tight text-[#1a3b70]">{title}</h3>
+        <h3 className="text-sm font-bold tracking-tight text-brand-900">{title}</h3>
         {subtitle ? <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p> : null}
       </div>
       {action}
@@ -141,7 +143,7 @@ export const Button = React.forwardRef<
 });
 
 const statAccents = {
-  saffron: 'bg-brand-50 text-brand-600',
+  saffron: 'bg-saffron-50 text-saffron-600',
   green: 'bg-india-50 text-india-600',
   slate: 'bg-slate-100 text-slate-500',
   amber: 'bg-amber-50 text-amber-600',

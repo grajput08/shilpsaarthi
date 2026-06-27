@@ -13,17 +13,16 @@ export interface BarDatum {
 }
 
 const TONES = {
-  saffron: 'bg-brand-500',
+  brand: 'bg-brand-500',
   green: 'bg-india-500',
   slate: 'bg-slate-400',
-  navy: 'bg-[#1a3b70]',
 } as const;
 
 export default function BarList({
   title,
   subtitle,
   data,
-  tone = 'saffron',
+  tone = 'brand',
   max: maxItems = 6,
   emptyLabel = 'No data yet',
 }: {
@@ -46,12 +45,23 @@ export default function BarList({
           ) : (
             <div className="space-y-3">
               {rows.map((d) => (
-                <div key={d.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 text-sm">
-                  <span className="truncate text-slate-600 [text-wrap:pretty]">{d.label}</span>
-                  <span className="font-semibold tabular-nums text-slate-800">{d.value}</span>
+                <div
+                  key={d.label}
+                  className="group grid cursor-default grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 rounded-lg px-1 py-0.5 text-sm transition-colors duration-200 hover:bg-slate-50/80 motion-reduce:transition-none"
+                >
+                  <span className="truncate text-slate-600 transition-colors duration-200 [text-wrap:pretty] group-hover:text-slate-900 motion-reduce:transition-none">
+                    {d.label}
+                  </span>
+                  <span className="font-semibold tabular-nums text-slate-800 transition-colors duration-200 group-hover:text-slate-950 motion-reduce:transition-none">
+                    {d.value}
+                  </span>
                   <div className="col-span-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className={`h-full rounded-full ${TONES[tone]}`}
+                      className={cn(
+                        'h-full origin-left rounded-full transition-all duration-200 motion-reduce:transition-none',
+                        TONES[tone],
+                        'group-hover:scale-y-125 group-hover:brightness-110 group-hover:shadow-sm',
+                      )}
                       style={{ width: `${Math.max(3, (d.value / peak) * 100)}%` }}
                     />
                   </div>

@@ -10,12 +10,12 @@ import {
 export interface QualityStat {
   value: React.ReactNode;
   label: string;
-  tone: 'green' | 'blue' | 'red';
+  tone: 'green' | 'brand' | 'red';
 }
 
 const toneClasses = {
   green: 'text-india-600',
-  blue: 'text-[#1a3b70]',
+  brand: 'text-brand-700',
   red: 'text-red-600',
 } as const;
 

@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:reset": "supabase db reset",
+    "db:seed:200": "node scripts/seed-200-leads.mjs",
     "db:lint": "supabase db lint",
     "db:test": "supabase test db",
     "db:types": "supabase gen types typescript --local --schema public > src/lib/supabase/database.types.ts",

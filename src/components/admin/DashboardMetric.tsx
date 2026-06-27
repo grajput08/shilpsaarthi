@@ -17,10 +17,10 @@ export default function DashboardMetric({
 }) {
   return (
     <Card className={cn(DASHBOARD_CARD, 'p-5', className)}>
-      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1e4d8c] text-white">
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
         {icon}
       </span>
-      <p className="mt-4 text-[2rem] font-bold leading-none tabular-nums tracking-tight text-[#1a3b70]">{value}</p>
+      <p className="mt-4 text-[2rem] font-bold leading-none tabular-nums tracking-tight text-brand-900">{value}</p>
       <p className="mt-1.5 text-sm text-slate-500">{label}</p>
       {hint ? (
         <p className="mt-auto pt-3 text-xs font-medium text-india-600">{hint}</p>

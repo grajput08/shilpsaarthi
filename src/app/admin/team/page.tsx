@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { Card, CardBody, Chip, EmptyState } from '@/components/ui';
 import { ROLE_LABEL } from '@/lib/domain';
+import { DASHBOARD_PAGE_TITLE } from '@/components/admin/dashboard-layout';
 
 export default async function TeamPage() {
   const supabase = createClient();
@@ -24,7 +25,7 @@ export default async function TeamPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold text-slate-900">Field Team</h1>
+      <h1 className={`mb-4 ${DASHBOARD_PAGE_TITLE}`}>Field Team</h1>
       {team.length === 0 ? (
         <EmptyState title="No field team members visible in your scope." />
       ) : (

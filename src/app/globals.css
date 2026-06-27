@@ -4,6 +4,9 @@
 
 :root {
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --color-brand: #13448f;
+  --color-india-green: #0f7a06;
+  --color-saffron: #ff671f;
 }
 
 html {

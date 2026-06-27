@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card, CardHeader, CardBody, FormRow, Select, Input } from '@/components/ui';
-import { assignVerifier, updateArtisanStatus, sendWhatsApp, type ActionResult } from '@/app/admin/actions';
+import { assignVerifier, updateArtisanStatus, /* sendWhatsApp, */ type ActionResult } from '@/app/admin/actions';
 
 interface Props {
   artisanId: string;
@@ -77,12 +77,12 @@ export default function ArtisanActions({ artisanId, verifiers, templates, canAss
           />
         ) : null}
 
-        <WhatsAppBlock
+        {/* <WhatsAppBlock
           artisanId={artisanId}
           templates={templates}
           pending={pending}
           onRun={(fd) => run(() => sendWhatsApp(fd), 'WhatsApp message sent (mock).')}
-        />
+        /> */}
       </CardBody>
     </Card>
   );
@@ -138,6 +138,7 @@ function AssignBlock({
   );
 }
 
+/*
 function WhatsAppBlock({
   artisanId,
   templates,
@@ -184,3 +185,4 @@ function WhatsAppBlock({
     </div>
   );
 }
+*/

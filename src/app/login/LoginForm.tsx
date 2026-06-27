@@ -12,7 +12,7 @@ function SubmitButton() {
       type="submit"
       data-testid="login-submit"
       disabled={pending}
-      className="w-full rounded-lg bg-[#FF671F] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#e2540f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF671F] focus-visible:ring-offset-1 disabled:opacity-60"
+      className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-1 disabled:opacity-60"
     >
       {pending ? 'Signing in…' : 'Login'}
     </button>
@@ -20,7 +20,7 @@ function SubmitButton() {
 }
 
 const fieldWrap =
-  'flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 focus-within:border-[#FF671F] focus-within:ring-1 focus-within:ring-[#FF671F]';
+  'flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 focus-within:border-brand-600 focus-within:ring-1 focus-within:ring-brand-600';
 const fieldInput = 'w-full bg-transparent py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none';
 
 export default function LoginForm() {
@@ -66,7 +66,7 @@ export default function LoginForm() {
       </div>
 
       <label className="flex items-center gap-2 text-sm text-slate-600">
-        <input type="checkbox" name="remember" defaultChecked className="h-4 w-4 accent-[#FF671F]" />
+        <input type="checkbox" name="remember" defaultChecked className="h-4 w-4 accent-brand-600" />
         Remember me
       </label>
 

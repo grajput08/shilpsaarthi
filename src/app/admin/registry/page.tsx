@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Card, CardBody, Chip, EmptyState, Input, Select, Button, ProgressBar } from '@/components/ui';
+import { Pagination } from '@/components/Pagination';
 import { ArtisanStatusBadge } from '@/components/badges';
 import {
   ARTISAN_STATUS,
@@ -11,6 +12,8 @@ import {
   type ArtisanStatus,
 } from '@/lib/domain';
 import { maskPhone, formatDate } from '@/lib/format';
+import { DEFAULT_PAGE_SIZE, buildQueryString, clampPage, parsePage } from '@/lib/pagination';
+import { DASHBOARD_PAGE_TITLE } from '@/components/admin/dashboard-layout';
 
 interface SearchParams {
   q?: string;
@@ -19,38 +22,65 @@ interface SearchParams {
   source?: string;
   state?: string;
   district?: string;
+  page?: string;
 }
+
+function registryHref(filters: SearchParams, page: number) {
+  const { page: _page, ...rest } = filters;
+  return `/admin/registry${buildQueryString(rest, page > 1 ? { page: String(page) } : { page: undefined })}`;
+}
+
+const REGISTRY_COLUMNS =
+  'id, artisan_code, full_name, phone, state, district, village, primary_craft, registration_source, status, data_completeness, duplicate_risk, updated_at';
 
 export default async function RegistryPage({ searchParams }: { searchParams: SearchParams }) {
   const supabase = createClient();
-  let query = supabase
-    .from('artisans')
-    .select('id, artisan_code, full_name, phone, state, district, village, primary_craft, registration_source, status, data_completeness, duplicate_risk, updated_at')
-    .order('updated_at', { ascending: false })
-    .limit(200);
+  const filters = searchParams;
 
-  if (searchParams.q) query = query.ilike('full_name', `%${searchParams.q}%`);
-  if (searchParams.status) query = query.eq('status', searchParams.status as ArtisanStatus);
-  if (searchParams.craft) query = query.eq('primary_craft', searchParams.craft as never);
-  if (searchParams.source) query = query.eq('registration_source', searchParams.source as never);
-  if (searchParams.state) query = query.ilike('state', `%${searchParams.state}%`);
-  if (searchParams.district) query = query.ilike('district', `%${searchParams.district}%`);
+  const buildQuery = () => {
+    let query = supabase
+      .from('artisans')
+      .select(REGISTRY_COLUMNS, { count: 'exact' })
+      .order('updated_at', { ascending: false });
 
-  const { data } = await query;
+    if (filters.q) query = query.ilike('full_name', `%${filters.q}%`);
+    if (filters.status) query = query.eq('status', filters.status as ArtisanStatus);
+    if (filters.craft) query = query.eq('primary_craft', filters.craft as never);
+    if (filters.source) query = query.eq('registration_source', filters.source as never);
+    if (filters.state) query = query.ilike('state', `%${filters.state}%`);
+    if (filters.district) query = query.ilike('district', `%${filters.district}%`);
+    return query;
+  };
+
+  const rawPage = parsePage(filters.page);
+  let page = rawPage;
+  let from = (page - 1) * DEFAULT_PAGE_SIZE;
+  let to = from + DEFAULT_PAGE_SIZE - 1;
+
+  let { data, count } = await buildQuery().range(from, to);
+  const total = count ?? 0;
+  page = clampPage(rawPage, total, DEFAULT_PAGE_SIZE);
+
+  if (page !== rawPage && total > 0) {
+    from = (page - 1) * DEFAULT_PAGE_SIZE;
+    to = from + DEFAULT_PAGE_SIZE - 1;
+    ({ data } = await buildQuery().range(from, to));
+  }
+
   const artisans = data ?? [];
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Artisan Registry</h1>
-        <span className="text-sm text-slate-500">{artisans.length} record(s)</span>
+        <h1 className={DASHBOARD_PAGE_TITLE}>Artisan Registry</h1>
+        <span className="text-sm text-slate-500">{total} record(s)</span>
       </div>
 
       <Card className="mb-4">
         <CardBody>
           <form method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="registry-filters">
-            <Input name="q" placeholder="Search name…" defaultValue={searchParams.q ?? ''} data-testid="registry-search" />
-            <Select name="status" defaultValue={searchParams.status ?? ''} data-testid="registry-status">
+            <Input name="q" placeholder="Search name…" defaultValue={filters.q ?? ''} data-testid="registry-search" />
+            <Select name="status" defaultValue={filters.status ?? ''} data-testid="registry-status">
               <option value="">All statuses</option>
               {ARTISAN_STATUS_ORDER.map((s) => (
                 <option key={s} value={s}>
@@ -58,7 +88,7 @@ export default async function RegistryPage({ searchParams }: { searchParams: Sea
                 </option>
               ))}
             </Select>
-            <Select name="craft" defaultValue={searchParams.craft ?? ''}>
+            <Select name="craft" defaultValue={filters.craft ?? ''}>
               <option value="">All crafts</option>
               {enumOptions(CRAFT_CATEGORY).map((c) => (
                 <option key={c} value={c}>
@@ -66,7 +96,7 @@ export default async function RegistryPage({ searchParams }: { searchParams: Sea
                 </option>
               ))}
             </Select>
-            <Select name="source" defaultValue={searchParams.source ?? ''}>
+            <Select name="source" defaultValue={filters.source ?? ''}>
               <option value="">All sources</option>
               {enumOptions(REGISTRATION_SOURCE).map((s) => (
                 <option key={s} value={s}>
@@ -74,8 +104,8 @@ export default async function RegistryPage({ searchParams }: { searchParams: Sea
                 </option>
               ))}
             </Select>
-            <Input name="state" placeholder="State" defaultValue={searchParams.state ?? ''} />
-            <Input name="district" placeholder="District" defaultValue={searchParams.district ?? ''} />
+            <Input name="state" placeholder="State" defaultValue={filters.state ?? ''} />
+            <Input name="district" placeholder="District" defaultValue={filters.district ?? ''} />
             <div className="flex gap-2">
               <Button type="submit" data-testid="registry-apply">Apply</Button>
               <Link href="/admin/registry">
@@ -86,7 +116,7 @@ export default async function RegistryPage({ searchParams }: { searchParams: Sea
         </CardBody>
       </Card>
 
-      {artisans.length === 0 ? (
+      {total === 0 ? (
         <EmptyState title="No artisans match these filters." />
       ) : (
         <Card>
@@ -139,6 +169,13 @@ export default async function RegistryPage({ searchParams }: { searchParams: Sea
               </tbody>
             </table>
           </div>
+          <Pagination
+            page={page}
+            pageSize={DEFAULT_PAGE_SIZE}
+            total={total}
+            hrefForPage={(p) => registryHref(filters, p)}
+            testId="registry-pagination"
+          />
         </Card>
       )}
     </div>

@@ -4,6 +4,7 @@ import { Card, EmptyState, Chip } from '@/components/ui';
 import { ArtisanStatusBadge } from '@/components/badges';
 import { CRAFT_CATEGORY, type ArtisanStatus } from '@/lib/domain';
 import { cn } from '@/lib/cn';
+import { DASHBOARD_PAGE_TITLE } from '@/components/admin/dashboard-layout';
 
 const TABS: { key: string; label: string; statuses: ArtisanStatus[] }[] = [
   { key: 'unassigned', label: 'Unassigned', statuses: ['pending_verification'] },
@@ -38,7 +39,7 @@ export default async function QueuePage({ searchParams }: { searchParams: { tab?
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold text-slate-900">Verification Queue</h1>
+      <h1 className={`mb-4 ${DASHBOARD_PAGE_TITLE}`}>Verification Queue</h1>
 
       <div className="mb-4 flex flex-wrap gap-2">
         {TABS.map((t) => (

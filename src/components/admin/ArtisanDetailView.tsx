@@ -20,8 +20,10 @@ import {
 import { Card, CardBody, CardHeader, Chip, ProgressBar } from '@/components/ui';
 import { ArtisanStatusBadge, DecisionBadge, DocStatusBadge, PriorityBadge } from '@/components/badges';
 import ArtisanActions from '@/components/admin/ArtisanActions';
-import VerificationItems, { type VItem } from '@/components/admin/VerificationItems';
-import WhatsAppTimeline, { type TimelineMessage } from '@/components/admin/WhatsAppTimeline';
+// import VerificationItems, { type VItem } from '@/components/admin/VerificationItems';
+import { type VItem } from '@/components/admin/VerificationItems';
+// import WhatsAppTimeline, { type TimelineMessage } from '@/components/admin/WhatsAppTimeline';
+import { type TimelineMessage } from '@/components/admin/WhatsAppTimeline';
 import { composeProfileStory } from '@/lib/artisan-profile';
 import {
   CONSENT_STATUS,
@@ -165,7 +167,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 export default function ArtisanDetailView({ data }: { data: ArtisanDetailData }) {
   const [tab, setTab] = useState<TabId>('profile');
-  const { artisan, craft, address, products, documents, verifications, messages } = data;
+  const { artisan, craft, address, products, documents, verifications } = data;
 
   const craftLabel = artisan.primary_craft
     ? CRAFT_CATEGORY[artisan.primary_craft as CraftCategory]
@@ -203,7 +205,7 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
     <div className="space-y-5">
       <Link
         href="/admin/registry"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-[#1a3b70]"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-brand-700"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to registry
@@ -228,19 +230,19 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
                   className="h-20 w-20 shrink-0 rounded-full border-2 border-white object-cover shadow-md ring-2 ring-slate-100"
                 />
               ) : (
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1a3b70] to-[#2d5aa0] text-2xl font-bold text-white shadow-md">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-400 text-2xl font-bold text-white shadow-md">
                   {initials(artisan.full_name)}
                 </div>
               )}
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold tracking-tight text-[#1a3b70] sm:text-3xl">
+                  <h1 className="text-2xl font-bold tracking-tight text-brand-900 sm:text-3xl">
                     {artisan.full_name}
                   </h1>
                   <ArtisanStatusBadge status={artisan.status as never} />
                 </div>
                 {artisan.artisan_code ? (
-                  <p className="mt-1.5 inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                  <p className="mt-1.5 inline-flex items-center rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-200">
                     Adi Setu ID {artisan.artisan_code}
                   </p>
                 ) : null}
@@ -264,10 +266,10 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
                       Consent: {CONSENT_STATUS[artisan.consent_status]}
                     </span>
                   )}
-                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
+                  <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 ring-1 ring-inset ring-brand-200">
                     Channel: {channelLabel}
                   </span>
-                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
+                  <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 ring-1 ring-inset ring-brand-200">
                     Onboarded: {formatDate(artisan.created_at)}
                   </span>
                   <PriorityBadge priority={artisan.priority as never} />
@@ -279,7 +281,7 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
               <button
                 type="button"
                 onClick={exportProfile}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#1a3b70] bg-white px-4 py-2 text-sm font-semibold text-[#1a3b70] shadow-sm transition-colors hover:bg-blue-50"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-600 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm transition-colors hover:bg-brand-50"
               >
                 <Download className="h-4 w-4" />
                 Export
@@ -316,7 +318,7 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
                 onClick={() => setTab(id)}
                 className={`inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
                   active
-                    ? 'border-[#FF671F] text-[#FF671F]'
+                    ? 'border-brand-600 text-brand-600'
                     : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
                 }`}
               >
@@ -348,13 +350,13 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
                         className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-100"
                       />
                     ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1a3b70] text-sm font-bold text-white">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
                         {initials(artisan.full_name)}
                       </div>
                     )}
                     <div>
-                      <h2 className="text-lg font-bold text-[#1a3b70]">The story of {artisan.full_name.split(' ')[0]}</h2>
-                      <Chip tone="blue" className="mt-1">
+                      <h2 className="text-lg font-bold text-brand-900">The story of {artisan.full_name.split(' ')[0]}</h2>
+                      <Chip tone="brand" className="mt-1">
                         Compiled from profile data
                       </Chip>
                     </div>
@@ -411,7 +413,7 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
                           {p.description ? (
                             <p className="mt-1 line-clamp-2 text-xs text-slate-500">{p.description}</p>
                           ) : null}
-                          <p className="mt-2 text-sm font-medium text-[#FF671F]">
+                          <p className="mt-2 text-sm font-medium text-brand-600">
                             {p.price_min != null
                               ? `₹${p.price_min}${p.price_max ? ` – ₹${p.price_max}` : ''}`
                               : 'Price not set'}
@@ -483,7 +485,7 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
                           href={`https://www.openstreetmap.org/?mlat=${address.latitude}&mlon=${address.longitude}#map=15/${address.latitude}/${address.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm font-semibold text-[#1a3b70] hover:underline"
+                          className="text-sm font-semibold text-brand-700 hover:text-brand-800 hover:underline"
                         >
                           View on map →
                         </a>
@@ -573,7 +575,7 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
             canAssign={data.canAssign}
           />
 
-          {data.latestVerification ? (
+          {/* {data.latestVerification ? (
             <VerificationItems
               artisanId={artisan.id}
               verificationId={data.latestVerification.id}
@@ -584,7 +586,7 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
             />
           ) : null}
 
-          <WhatsAppTimeline messages={messages} />
+          <WhatsAppTimeline messages={messages} /> */}
         </div>
       </div>
     </div>

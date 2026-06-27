@@ -32,7 +32,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="rounded-xl bg-slate-50 p-3">
             <p className="truncate text-sm font-semibold text-slate-800">{profile.full_name}</p>
             <div className="mt-1.5">
-              <Chip tone="blue">{ROLE_LABEL[profile.role]}</Chip>
+              <Chip tone="brand">{ROLE_LABEL[profile.role]}</Chip>
             </div>
             {profile.state ? (
               <p className="mt-1.5 text-xs text-slate-500 [text-wrap:pretty]">

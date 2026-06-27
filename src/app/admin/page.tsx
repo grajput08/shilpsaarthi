@@ -172,7 +172,7 @@ export default async function OverviewPage() {
             title="Artisans by state"
             subtitle="Ranked view (map fallback)"
             data={stateData}
-            tone="navy"
+            tone="brand"
             max={14}
           />
         </div>
@@ -183,7 +183,7 @@ export default async function OverviewPage() {
 
       <div className="grid items-stretch gap-4 lg:grid-cols-3">
         <div className="h-full">
-          <BarList title="Top crafts" data={craftData} tone="navy" max={10} />
+          <BarList title="Top crafts" data={craftData} tone="brand" max={10} />
         </div>
         <div className="h-full lg:col-span-2">
           <AreaTrendChart title="Onboardings per month" data={monthlyData} />
@@ -199,7 +199,7 @@ export default async function OverviewPage() {
             title="Data quality"
             stats={[
               { value: `${avgCompleteness}%`, label: 'Profile completeness', tone: 'green' },
-              { value: duplicatesResolved, label: 'Duplicates resolved', tone: 'blue' },
+              { value: duplicatesResolved, label: 'Duplicates resolved', tone: 'brand' },
               { value: pendingVerification, label: 'Pending verification', tone: 'red' },
             ]}
           />

@@ -1,30 +1,31 @@
 import * as React from 'react';
 
+import { BRAND_PRIMARY, BRAND_SHADES } from '@/lib/theme';
+
 /**
  * "Adi Setu" mark — two figures crossing a bridge under a rising sun.
- * Saffron + India-green; purely illustrative branding for the POC.
  */
 export function AdiSetuLogo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 120 96" className={className} role="img" aria-label="Adi Setu logo">
       {/* rising sun / rays */}
-      <g stroke="#FF671F" strokeWidth="3.4" strokeLinecap="round">
+      <g stroke={BRAND_PRIMARY} strokeWidth="3.4" strokeLinecap="round">
         <path d="M60 30 V18 M60 30 M44 34 L36 26 M76 34 L84 26 M40 44 H28 M80 44 H92 M50 31 L45 21 M70 31 L75 21" />
       </g>
-      <circle cx="60" cy="40" r="9" fill="#FF671F" />
+      <circle cx="60" cy="40" r="9" fill={BRAND_PRIMARY} />
       {/* two figures */}
-      <g fill="#FF671F">
+      <g fill={BRAND_PRIMARY}>
         <circle cx="49" cy="40" r="4.2" />
         <path d="M49 45 l-5 13 h10 z" />
       </g>
-      <g fill="#0F7A06">
+      <g fill={BRAND_SHADES[400]}>
         <circle cx="71" cy="40" r="4.2" />
         <path d="M71 45 l-5 13 h10 z" />
       </g>
       {/* bridge arch + deck */}
-      <path d="M16 84 Q60 52 104 84" fill="none" stroke="#0F7A06" strokeWidth="4" />
-      <path d="M14 70 H106" stroke="#0F7A06" strokeWidth="5" strokeLinecap="round" />
-      <g stroke="#0F7A06" strokeWidth="3">
+      <path d="M16 84 Q60 52 104 84" fill="none" stroke={BRAND_SHADES[600]} strokeWidth="4" />
+      <path d="M14 70 H106" stroke={BRAND_SHADES[600]} strokeWidth="5" strokeLinecap="round" />
+      <g stroke={BRAND_SHADES[600]} strokeWidth="3">
         <path d="M26 70 V82 M42 70 V80 M60 70 V78 M78 70 V80 M94 70 V82" />
       </g>
     </svg>
