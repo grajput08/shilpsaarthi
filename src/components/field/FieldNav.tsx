@@ -14,7 +14,7 @@ const items = [
 export default function FieldNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md border-t border-slate-200 bg-white">
+    <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md border-t border-slate-200/80 bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
       {items.map((item) => {
         const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
         const Icon = item.icon;
@@ -22,12 +22,25 @@ export default function FieldNav() {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium',
-              active ? 'text-brand-600' : 'text-slate-500',
+              'group relative flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 text-xs font-medium',
+              'transition-colors duration-150 active:bg-slate-50 motion-reduce:transition-none',
+              active ? 'text-brand-600' : 'text-slate-500 hover:text-slate-700',
             )}
           >
-            <Icon className="h-5 w-5" />
+            <span
+              className={cn(
+                'absolute top-0 h-0.5 w-8 rounded-full bg-brand-600 transition-all duration-200 ease-out',
+                active ? 'opacity-100' : 'opacity-0',
+              )}
+            />
+            <Icon
+              className={cn(
+                'h-5 w-5 transition-transform duration-150 ease-out',
+                active ? 'scale-105' : 'group-active:scale-95',
+              )}
+            />
             {item.label}
           </Link>
         );

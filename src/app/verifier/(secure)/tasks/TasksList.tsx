@@ -47,10 +47,16 @@ export default function TasksList({ rows }: { rows: Row[] }) {
         {FILTERS.map((f) => (
           <button
             key={f.key}
+            type="button"
+            aria-pressed={filter === f.key}
             onClick={() => setFilter(f.key)}
             className={cn(
-              'rounded-full px-3 py-1 text-sm font-medium',
-              filter === f.key ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600',
+              'rounded-full px-3.5 py-1.5 text-sm font-medium',
+              'transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+              filter === f.key
+                ? 'bg-brand-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
             )}
           >
             {f.label}

@@ -32,7 +32,7 @@ export default async function FieldArtisanPage({ params }: { params: { id: strin
       </div>
 
       {artisan.duplicate_risk === 'high' ? (
-        <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm font-medium text-amber-800 [text-wrap:pretty]">
           ⚠ Possible duplicate flagged. Please confirm identity carefully.
         </div>
       ) : null}
@@ -98,7 +98,7 @@ export default async function FieldArtisanPage({ params }: { params: { id: strin
       <Link
         href={`/verifier/artisans/${artisan.id}/verify`}
         data-testid="start-verification"
-        className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-3 text-base font-semibold text-white hover:bg-brand-700"
+        className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-base font-semibold text-white shadow-sm transition-[background-color,transform] duration-150 ease-out hover:bg-brand-700 active:scale-[0.99] motion-reduce:active:scale-100"
       >
         <ClipboardCheck className="h-5 w-5" />
         Start Verification

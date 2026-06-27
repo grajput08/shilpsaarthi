@@ -76,7 +76,7 @@ export default function SyncPage() {
                   <Button
                     className="mt-3"
                     variant="secondary"
-                    disabled={busy === d.artisanId}
+                    loading={busy === d.artisanId}
                     onClick={() => retry(d)}
                     data-testid="sync-retry"
                   >

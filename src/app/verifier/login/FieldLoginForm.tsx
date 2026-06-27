@@ -7,7 +7,7 @@ import { Button, Card, CardBody, FormRow, Input } from '@/components/ui';
 function SubmitButton({ stage }: { stage: 'request' | 'verify' }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" block disabled={pending} data-testid={stage === 'request' ? 'otp-send' : 'otp-verify'}>
+    <Button type="submit" block loading={pending} data-testid={stage === 'request' ? 'otp-send' : 'otp-verify'}>
       {pending ? 'Please wait…' : stage === 'request' ? 'Send code' : 'Verify & sign in'}
     </Button>
   );
