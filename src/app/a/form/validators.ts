@@ -1,4 +1,5 @@
 import { PHONE_REGEX } from '@/lib/validation';
+import { INDIAN_STATES } from '@/lib/india-locations';
 
 /**
  * Decoupled, framework-agnostic validation for the artisan registration form.
@@ -27,8 +28,8 @@ export const validators: Record<ValidatableField, Validator> = {
   consent: (v) => (v === true ? null : 'Please accept the consent to continue.'),
   full_name: (v) => (str(v).trim().length >= 2 ? null : 'Please enter your full name.'),
   phone: (v) => (PHONE_REGEX.test(str(v)) ? null : 'Enter a valid 10-digit mobile number.'),
-  state: (v) => (str(v).trim().length >= 2 ? null : 'State is required.'),
-  district: (v) => (str(v).trim().length >= 2 ? null : 'District is required.'),
+  state: (v) => (INDIAN_STATES.includes(str(v).trim()) ? null : 'Please select a state.'),
+  district: (v) => (str(v).trim().length >= 2 ? null : 'Please select a district.'),
   village: (v) => (str(v).trim().length >= 1 ? null : 'Village is required.'),
   primary_craft: (v) => (str(v) ? null : 'Please choose a craft category.'),
 };

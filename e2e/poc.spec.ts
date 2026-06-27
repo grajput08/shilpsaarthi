@@ -17,9 +17,12 @@ test.describe('open public registration at /register', () => {
     await page.getByTestId('reg-next').click();
     await page.getByTestId('reg-name').fill(artisanName);
     await page.getByTestId('reg-phone').fill('9876512399');
+    await page.getByTestId('reg-otp-send').click();
+    await page.getByTestId('reg-otp-code').fill('123456');
+    await expect(page.getByTestId('reg-phone-verified')).toBeVisible();
     await page.getByTestId('reg-next').click();
-    await page.getByTestId('reg-state').fill('Madhya Pradesh');
-    await page.getByTestId('reg-district').fill('Dindori');
+    await page.getByTestId('reg-state').selectOption('Madhya Pradesh');
+    await page.getByTestId('reg-district').selectOption('Dindori');
     await page.getByTestId('reg-village').fill('Karanjia');
     await page.getByTestId('reg-next').click();
     await page.getByTestId('reg-craft').selectOption('pottery');
@@ -64,9 +67,12 @@ test('public link needs no login, shows no CRM UI, and creates a Pending Verific
   await page.getByTestId('reg-next').click(); // -> identity
   await page.getByTestId('reg-name').fill(ARTISAN_NAME);
   await page.getByTestId('reg-phone').fill('9876512345');
+  await page.getByTestId('reg-otp-send').click();
+  await page.getByTestId('reg-otp-code').fill('123456');
+  await expect(page.getByTestId('reg-phone-verified')).toBeVisible();
   await page.getByTestId('reg-next').click(); // -> address
-  await page.getByTestId('reg-state').fill('Madhya Pradesh');
-  await page.getByTestId('reg-district').fill('Dindori');
+  await page.getByTestId('reg-state').selectOption('Madhya Pradesh');
+  await page.getByTestId('reg-district').selectOption('Dindori');
   await page.getByTestId('reg-village').fill('Karanjia');
   await page.getByTestId('reg-next').click(); // -> craft
   await page.getByTestId('reg-craft').selectOption('pottery');

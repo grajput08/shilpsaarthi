@@ -1,6 +1,7 @@
 import RegistrationForm from '@/app/a/form/RegistrationForm';
+import RegistrationPageShell from '@/app/a/form/RegistrationPageShell';
 
-export const metadata = { title: 'Artisan Registration · ShilpSaarthi' };
+export const metadata = { title: 'Adi Setu — Artisan Registration' };
 export const dynamic = 'force-dynamic';
 
 export default function RegisterPage({
@@ -9,8 +10,8 @@ export default function RegisterPage({
   searchParams: { lang?: string };
 }>) {
   return (
-    <main className="pwa mx-auto min-h-screen max-w-md bg-slate-50 px-4 py-6">
+    <RegistrationPageShell>
       <RegistrationForm initialLanguage={searchParams.lang ?? 'en'} />
-    </main>
+    </RegistrationPageShell>
   );
 }

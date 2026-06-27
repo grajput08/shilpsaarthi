@@ -105,21 +105,58 @@ export const BHASHINI_LANGUAGES_LIVE = 24;
 
 /** Human-readable labels for language codes in dashboard charts. */
 export const LANGUAGE_LABEL: Record<string, string> = {
-  hi: 'Hindi',
-  or: 'Odia',
-  te: 'Telugu',
-  bn: 'Bengali',
-  mr: 'Marathi',
-  ur: 'Urdu',
-  gu: 'Gujarati',
   en: 'English',
-  sat: 'Santali',
+  hi: 'Hindi',
+  bn: 'Bengali',
+  te: 'Telugu',
+  mr: 'Marathi',
   ta: 'Tamil',
+  gu: 'Gujarati',
   kn: 'Kannada',
   ml: 'Malayalam',
   pa: 'Punjabi',
+  or: 'Odia',
   as: 'Assamese',
+  ur: 'Urdu',
+  sa: 'Sanskrit',
+  ks: 'Kashmiri',
+  kok: 'Konkani',
+  sd: 'Sindhi',
+  ne: 'Nepali',
+  mai: 'Maithili',
+  doi: 'Dogri',
+  brx: 'Bodo',
+  mni: 'Manipuri',
+  sat: 'Santali',
+  raj: 'Rajasthani',
 };
+
+export const LANGUAGES: { code: string; label: string; native: string }[] = [
+  { code: 'en', label: 'English', native: 'English' },
+  { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
+  { code: 'bn', label: 'Bengali', native: 'বাংলা' },
+  { code: 'te', label: 'Telugu', native: 'తెలుగు' },
+  { code: 'mr', label: 'Marathi', native: 'मराठी' },
+  { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
+  { code: 'gu', label: 'Gujarati', native: 'ગુજરાતી' },
+  { code: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'ml', label: 'Malayalam', native: 'മലയാളം' },
+  { code: 'pa', label: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
+  { code: 'or', label: 'Odia', native: 'ଓଡ଼ିଆ' },
+  { code: 'as', label: 'Assamese', native: 'অসমীয়া' },
+  { code: 'ur', label: 'Urdu', native: 'اردو' },
+  { code: 'sa', label: 'Sanskrit', native: 'संस्कृतम्' },
+  { code: 'ks', label: 'Kashmiri', native: 'کٲشُر' },
+  { code: 'kok', label: 'Konkani', native: 'Konkani' },
+  { code: 'sd', label: 'Sindhi', native: 'سنڌي' },
+  { code: 'ne', label: 'Nepali', native: 'नेपाली' },
+  { code: 'mai', label: 'Maithili', native: 'मैथिली' },
+  { code: 'doi', label: 'Dogri', native: 'डोगरी' },
+  { code: 'brx', label: 'Bodo', native: 'Bodo' },
+  { code: 'mni', label: 'Manipuri', native: 'Manipuri' },
+  { code: 'sat', label: 'Santali', native: 'ᱥᱟᱱᱛᱟᱲᱤ' },
+  { code: 'raj', label: 'Rajasthani', native: 'राजस्थानी' },
+];
 
 export function onboardingChannelLabel(source: RegistrationSource): string {
   for (const channel of Object.values(ONBOARDING_CHANNEL)) {
@@ -195,13 +232,6 @@ export const WHATSAPP_TEMPLATE_LABEL: Record<string, string> = {
   verified_confirmation: 'Verified confirmation',
   scheme_update: 'Scheme / exhibition update',
 };
-
-export const LANGUAGES: { code: string; label: string; native: string }[] = [
-  { code: 'en', label: 'English', native: 'English' },
-  { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
-  { code: 'or', label: 'Odia', native: 'ଓଡ଼ିଆ' },
-  { code: 'sat', label: 'Santali', native: 'ᱥᱟᱱᱛᱟᱲᱤ' },
-];
 
 export const REVISIT_REASONS = [
   'Artisan not at home/workplace',

@@ -1,9 +1,11 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button, Card, CardBody, FormRow, Input, Select, Textarea, Chip, ProgressBar } from '@/components/ui';
 import { CRAFT_CATEGORY, GENDER, LANGUAGES, enumOptions, type CraftCategory, type Gender } from '@/lib/domain';
-import { CheckCircle2 } from 'lucide-react';
+import { getDistrictsForState, INDIAN_STATES } from '@/lib/india-locations';
+import { CheckCircle2, Sparkles } from 'lucide-react';
+import { demoProductForCraft, loadDemoProductImage } from './product-demo';
 import {
   validateField,
   validateStep,
@@ -95,6 +97,15 @@ export default function RegistrationForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ artisanCode: string | null } | null>(null);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpDevCode, setOtpDevCode] = useState<string | null>(null);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpBusy, setOtpBusy] = useState(false);
+  const [productAutofillBusy, setProductAutofillBusy] = useState(false);
+
+  const districtOptions = useMemo(() => getDistrictsForState(form.state), [form.state]);
 
   const fieldRefs = useRef<Partial<Record<FocusableField, FieldEl>>>({});
   const setRef = (field: FocusableField) => (el: FieldEl | null) => {
@@ -136,7 +147,85 @@ export default function RegistrationForm({
     setTimeout(() => setShaking(new Set(fields)), 0);
   }
 
+  function resetPhoneVerification() {
+    setPhoneVerified(false);
+    setOtpSent(false);
+    setOtpCode('');
+    setOtpDevCode(null);
+    setOtpError(null);
+  }
+
+  async function sendPhoneOtp() {
+    const message = validateField('phone', form.phone);
+    if (message) {
+      setErrors((prev) => ({ ...prev, phone: message }));
+      setTouched((t) => new Set(t).add('phone'));
+      triggerShake(['phone']);
+      fieldRefs.current.phone?.focus();
+      return;
+    }
+    setOtpBusy(true);
+    setOtpError(null);
+    try {
+      const res = await fetch('/api/public/register/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send', phone: form.phone }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        setOtpError(body.error ?? 'Could not send OTP.');
+        return;
+      }
+      setOtpSent(true);
+      setOtpDevCode(body.devCode ?? null);
+      setOtpCode('');
+    } catch {
+      setOtpError('Network error. Please try again.');
+    } finally {
+      setOtpBusy(false);
+    }
+  }
+
+  async function verifyPhoneOtp(code = otpCode) {
+    if (code.length < 4) {
+      setOtpError('Enter the 6-digit OTP.');
+      return;
+    }
+    setOtpBusy(true);
+    setOtpError(null);
+    try {
+      const res = await fetch('/api/public/register/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', phone: form.phone, code }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        setOtpError(body.error ?? 'OTP verification failed.');
+        setPhoneVerified(false);
+        return;
+      }
+      setPhoneVerified(true);
+      setOtpError(null);
+    } catch {
+      setOtpError('Network error. Please try again.');
+    } finally {
+      setOtpBusy(false);
+    }
+  }
+
   function next() {
+    if (step === 2 && !phoneVerified) {
+      setErrors((prev) => ({
+        ...prev,
+        phone: 'Please verify your mobile number with OTP.',
+      }));
+      setTouched((t) => new Set(t).add('phone'));
+      triggerShake(['phone']);
+      fieldRefs.current.phone?.focus();
+      return;
+    }
     const { errors: stepErrors, firstInvalid } = validateStep(step, form as unknown as Record<string, unknown>);
     if (firstInvalid) {
       setErrors((prev) => ({ ...prev, ...stepErrors }));
@@ -157,6 +246,48 @@ export default function RegistrationForm({
   function back() {
     setSubmitError(null);
     setStep((s) => Math.max(s - 1, 0));
+  }
+
+  function onStateChange(state: string) {
+    setForm((f) => ({ ...f, state, district: '' }));
+    setTouched((t) => {
+      const n = new Set(t);
+      n.add('state');
+      n.delete('district' as ValidatableField);
+      return n;
+    });
+    setErrors((prev) => {
+      const next = { ...prev };
+      const message = validateField('state', state);
+      if (message) next.state = message;
+      else delete next.state;
+      delete next.district;
+      return next;
+    });
+  }
+
+  function onDistrictChange(district: string) {
+    update('district', district);
+    onBlurField('district', district);
+  }
+
+  async function autofillProductDemo() {
+    setProductAutofillBusy(true);
+    setSubmitError(null);
+    try {
+      const demo = demoProductForCraft(form.primary_craft);
+      const imageDataUrl = await loadDemoProductImage(form.primary_craft);
+      setForm((f) => ({
+        ...f,
+        product_name: demo.name,
+        product_description: demo.description,
+        photo_paths: [imageDataUrl],
+      }));
+    } catch {
+      setSubmitError('Could not load demo product data. Please try again.');
+    } finally {
+      setProductAutofillBusy(false);
+    }
   }
 
   async function onPhotos(files: FileList | null) {
@@ -209,7 +340,7 @@ export default function RegistrationForm({
 
   if (done) {
     return (
-      <div data-testid="registration-success" className="flex flex-col items-center pt-16 text-center">
+      <div data-testid="registration-success" className="flex flex-col items-center pt-16 text-center lg:pt-8">
         <span className="animate-pop-in flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
           <CheckCircle2 className="h-10 w-10 text-emerald-500" />
         </span>
@@ -238,9 +369,10 @@ export default function RegistrationForm({
   return (
     <div>
       <header className="mb-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600">ShilpSaarthi</p>
-        <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-slate-900">Artisan Registration</h1>
-        <div className="mt-4 flex items-center gap-3">
+        <div className="lg:hidden">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Artisan Registration</h1>
+        </div>
+        <div className="mt-4 flex items-center gap-3 lg:mt-0">
           <ProgressBar value={((step + 1) / STEPS.length) * 100} />
           <span className="whitespace-nowrap text-xs font-medium tabular-nums text-slate-500">
             {step + 1}/{STEPS.length}
@@ -249,7 +381,7 @@ export default function RegistrationForm({
         <p className="mt-2 text-sm font-medium text-slate-500">{STEPS[step]}</p>
       </header>
 
-      <Card>
+      <Card className="lg:shadow-lg lg:shadow-slate-200/60">
         <CardBody>
           <div key={step} className="animate-step-enter">
             {step === 0 && (
@@ -313,7 +445,7 @@ export default function RegistrationForm({
             )}
 
             {step === 2 && (
-              <div className="space-y-4">
+              <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
                 <FormRow
                   label="Full name"
                   htmlFor="name"
@@ -322,6 +454,7 @@ export default function RegistrationForm({
                   valid={isValid('full_name', form.full_name)}
                   shake={shaking.has('full_name')}
                   errorId="err-name"
+                  className="lg:col-span-1"
                 >
                   <Input
                     id="name"
@@ -341,28 +474,112 @@ export default function RegistrationForm({
                   htmlFor="phone"
                   required
                   error={errors.phone}
-                  hint="10-digit number, starting 6–9"
-                  valid={isValid('phone', form.phone)}
+                  hint={phoneVerified ? 'Mobile number verified' : '10-digit number, starting 6–9 · verified by OTP'}
+                  valid={phoneVerified || isValid('phone', form.phone)}
                   shake={shaking.has('phone')}
                   errorId="err-phone"
+                  className="lg:col-span-1"
                 >
-                  <Input
-                    id="phone"
-                    ref={setRef('phone')}
-                    data-testid="reg-phone"
-                    inputMode="numeric"
-                    autoComplete="tel-national"
-                    maxLength={10}
-                    aria-describedby={errors.phone ? 'err-phone' : undefined}
-                    invalid={!!errors.phone}
-                    valid={isValid('phone', form.phone)}
-                    value={form.phone}
-                    onChange={(e) => update('phone', e.target.value.replace(/\D/g, ''))}
-                    onBlur={(e) => onBlurField('phone', e.target.value)}
-                    placeholder="10-digit mobile"
-                  />
+                  <div className="space-y-3">
+                    <Input
+                      id="phone"
+                      ref={setRef('phone')}
+                      data-testid="reg-phone"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      maxLength={10}
+                      aria-describedby={errors.phone ? 'err-phone' : undefined}
+                      invalid={!!errors.phone && !phoneVerified}
+                      valid={phoneVerified || isValid('phone', form.phone)}
+                      value={form.phone}
+                      readOnly={phoneVerified}
+                      onChange={(e) => {
+                        update('phone', e.target.value.replace(/\D/g, ''));
+                        resetPhoneVerification();
+                      }}
+                      onBlur={(e) => onBlurField('phone', e.target.value)}
+                      placeholder="10-digit mobile"
+                    />
+
+                    {phoneVerified ? (
+                      <p
+                        data-testid="reg-phone-verified"
+                        className="flex items-center gap-1.5 text-xs font-medium text-emerald-600"
+                      >
+                        <CheckCircle2 className="h-4 w-4" aria-hidden />
+                        Mobile number verified
+                      </p>
+                    ) : (
+                      <>
+                        {!otpSent ? (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            block
+                            loading={otpBusy}
+                            data-testid="reg-otp-send"
+                            onClick={() => void sendPhoneOtp()}
+                          >
+                            Send OTP
+                          </Button>
+                        ) : (
+                          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                            {otpDevCode ? (
+                              <p
+                                className="text-xs text-slate-600"
+                                data-testid="reg-otp-devcode"
+                              >
+                                Demo OTP: <strong className="font-semibold text-brand-600">{otpDevCode}</strong>
+                              </p>
+                            ) : null}
+                            <Input
+                              id="otp"
+                              data-testid="reg-otp-code"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={otpCode}
+                              placeholder="6-digit OTP"
+                              onChange={(e) => {
+                                const nextCode = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                setOtpCode(nextCode);
+                                setOtpError(null);
+                                if (nextCode.length === 6) {
+                                  void verifyPhoneOtp(nextCode);
+                                }
+                              }}
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => void sendPhoneOtp()}
+                                loading={otpBusy}
+                                disabled={otpBusy}
+                              >
+                                Resend
+                              </Button>
+                              <Button
+                                type="button"
+                                block
+                                loading={otpBusy}
+                                data-testid="reg-otp-verify"
+                                onClick={() => void verifyPhoneOtp()}
+                              >
+                                Verify OTP
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        {otpError ? (
+                          <p role="alert" className="text-xs font-medium text-red-600">
+                            {otpError}
+                          </p>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
                 </FormRow>
-                <FormRow label="Gender" htmlFor="gender">
+                <FormRow label="Gender" htmlFor="gender" className="lg:col-span-1">
                   <Select id="gender" value={form.gender} onChange={(e) => update('gender', e.target.value as Gender)}>
                     <option value="">Prefer not to say</option>
                     {enumOptions(GENDER).map((g) => (
@@ -372,7 +589,7 @@ export default function RegistrationForm({
                     ))}
                   </Select>
                 </FormRow>
-                <FormRow label="Tribe / community" htmlFor="tribe">
+                <FormRow label="Tribe / community" htmlFor="tribe" className="lg:col-span-2">
                   <Input
                     id="tribe"
                     value={form.tribe_community}
@@ -384,7 +601,7 @@ export default function RegistrationForm({
             )}
 
             {step === 3 && (
-              <div className="space-y-4">
+              <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
                 <FormRow
                   label="State"
                   htmlFor="state"
@@ -394,18 +611,23 @@ export default function RegistrationForm({
                   shake={shaking.has('state')}
                   errorId="err-state"
                 >
-                  <Input
+                  <Select
                     id="state"
                     ref={setRef('state')}
                     data-testid="reg-state"
                     aria-describedby={errors.state ? 'err-state' : undefined}
                     invalid={!!errors.state}
-                    valid={isValid('state', form.state)}
                     value={form.state}
-                    onChange={(e) => update('state', e.target.value)}
+                    onChange={(e) => onStateChange(e.target.value)}
                     onBlur={(e) => onBlurField('state', e.target.value)}
-                    placeholder="e.g. Madhya Pradesh"
-                  />
+                  >
+                    <option value="">Select state…</option>
+                    {INDIAN_STATES.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
+                  </Select>
                 </FormRow>
                 <FormRow
                   label="District"
@@ -416,20 +638,26 @@ export default function RegistrationForm({
                   shake={shaking.has('district')}
                   errorId="err-district"
                 >
-                  <Input
+                  <Select
                     id="district"
                     ref={setRef('district')}
                     data-testid="reg-district"
                     aria-describedby={errors.district ? 'err-district' : undefined}
                     invalid={!!errors.district}
-                    valid={isValid('district', form.district)}
+                    disabled={!form.state}
                     value={form.district}
-                    onChange={(e) => update('district', e.target.value)}
+                    onChange={(e) => onDistrictChange(e.target.value)}
                     onBlur={(e) => onBlurField('district', e.target.value)}
-                    placeholder="e.g. Dindori"
-                  />
+                  >
+                    <option value="">{form.state ? 'Select district…' : 'Select state first'}</option>
+                    {districtOptions.map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                  </Select>
                 </FormRow>
-                <FormRow label="Block / Taluka" htmlFor="block">
+                <FormRow label="Block / Taluka" htmlFor="block" className="lg:col-span-1">
                   <Input id="block" value={form.block} onChange={(e) => update('block', e.target.value)} />
                 </FormRow>
                 <FormRow
@@ -488,11 +716,30 @@ export default function RegistrationForm({
 
             {step === 5 && (
               <div className="space-y-4">
-                <p className="text-sm text-slate-500 [text-wrap:pretty]">
-                  Optional — share a product you make. You can skip this.
-                </p>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm text-slate-500 [text-wrap:pretty]">
+                    Optional — share a product you make. You can skip this.
+                  </p>
+                  <button
+                    type="button"
+                    data-testid="reg-product-autofill"
+                    title="Autofill demo product name and photo"
+                    aria-label="Autofill demo product name and photo"
+                    disabled={productAutofillBusy}
+                    onClick={() => void autofillProductDemo()}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-brand-600 shadow-sm transition-colors hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Sparkles className="h-4 w-4" aria-hidden />
+                  </button>
+                </div>
                 <FormRow label="Product name" htmlFor="pname">
-                  <Input id="pname" value={form.product_name} onChange={(e) => update('product_name', e.target.value)} placeholder="e.g. Handwoven cotton stole" />
+                  <Input
+                    id="pname"
+                    data-testid="reg-product-name"
+                    value={form.product_name}
+                    onChange={(e) => update('product_name', e.target.value)}
+                    placeholder="e.g. Handwoven cotton stole"
+                  />
                 </FormRow>
                 <FormRow label="Description" htmlFor="pdesc">
                   <Textarea id="pdesc" value={form.product_description} onChange={(e) => update('product_description', e.target.value)} />
@@ -508,9 +755,21 @@ export default function RegistrationForm({
                     className="block w-full cursor-pointer text-sm text-slate-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
                   />
                   {form.photo_paths.length > 0 ? (
-                    <p className="animate-step-enter mt-2 text-xs font-medium text-emerald-600">
-                      {form.photo_paths.length} photo(s) attached
-                    </p>
+                    <div className="animate-step-enter mt-3 space-y-2">
+                      <p className="text-xs font-medium text-emerald-600">
+                        {form.photo_paths.length} photo(s) attached
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {form.photo_paths.map((src, i) => (
+                          <img
+                            key={src.slice(0, 32)}
+                            src={src}
+                            alt={`Product preview ${i + 1}`}
+                            className="h-16 w-16 rounded-lg object-cover ring-1 ring-slate-200"
+                          />
+                        ))}
+                      </div>
+                    </div>
                   ) : null}
                 </FormRow>
               </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isRegistrationPhoneVerified, clearRegistrationPhoneVerification } from '@/lib/adapters/registration-otp';
 import { publicRegistrationSchema } from '@/lib/validation';
 import { sendWhatsappMessage, renderTemplate } from '@/lib/adapters/whatsapp';
 import { logAudit } from '@/lib/audit';
@@ -56,6 +57,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'This mobile number is already registered.' },
       { status: 409 },
+    );
+  }
+
+  if (!isRegistrationPhoneVerified(input.phone)) {
+    return NextResponse.json(
+      { error: 'Mobile number is not verified. Please complete OTP verification.' },
+      { status: 403 },
     );
   }
 
@@ -175,6 +183,8 @@ export async function POST(request: Request) {
     source: 'public_registration',
     newValue: { source: registrationSource, status: 'pending_verification' },
   });
+
+  clearRegistrationPhoneVerification(input.phone);
 
   return NextResponse.json({
     ok: true,

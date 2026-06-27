@@ -1,12 +1,20 @@
 import Image from 'next/image';
-import { Flag, GitBranch, LayoutGrid, Users } from 'lucide-react';
+import { Flag, GitBranch, LayoutGrid, Users, type LucideIcon } from 'lucide-react';
 
-const VALUE_PROPS = [
+type ValueProp = { icon: LucideIcon; title: string; sub: string };
+
+const ALL_VALUE_PROPS: ValueProp[] = [
   { icon: Users, title: 'One Identity', sub: 'Unified Artisan Registry' },
   { icon: GitBranch, title: 'One Bridge', sub: 'Connects Communities' },
   { icon: LayoutGrid, title: 'One Platform', sub: 'End-to-End Support' },
   { icon: Flag, title: 'One Vision', sub: 'Atmanirbhar Bharat' },
-] as const;
+];
+
+const REGISTRATION_VALUE_PROPS = ALL_VALUE_PROPS.filter(
+  (v) => v.title !== 'One Identity' && v.title !== 'One Bridge',
+);
+
+export { REGISTRATION_VALUE_PROPS };
 
 /** Concentric circle motif inspired by Theyyam headdress patterns. */
 function CirclePattern() {
@@ -26,7 +34,13 @@ function CirclePattern() {
   );
 }
 
-export default function LoginLeftSection() {
+export default function LoginLeftSection({
+  valueProps = ALL_VALUE_PROPS,
+  tagline = 'One Platform. One Identity. Infinite Possibilities.',
+}: Readonly<{
+  valueProps?: ValueProp[];
+  tagline?: string;
+}>) {
   return (
     <section className="relative isolate flex min-h-[200px] flex-col justify-end overflow-hidden lg:min-h-screen">
       <Image
@@ -61,12 +75,14 @@ export default function LoginLeftSection() {
           <span className="text-india-300">Prosper.</span>
         </p>
 
-        <p className="mt-2 max-w-md text-sm text-white/80 lg:mt-3">
-          One Platform. One Identity. Infinite Possibilities.
-        </p>
+        <p className="mt-2 max-w-md text-sm text-white/80 lg:mt-3">{tagline}</p>
 
-        <div className="mt-6 hidden grid-cols-2 gap-3 sm:grid-cols-4 lg:mt-8 lg:grid lg:gap-4">
-          {VALUE_PROPS.map((v) => {
+        <div
+          className={`mt-6 hidden gap-3 lg:mt-8 lg:grid lg:gap-4 ${
+            valueProps.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'
+          }`}
+        >
+          {valueProps.map((v) => {
             const Icon = v.icon;
             return (
               <div

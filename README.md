@@ -39,7 +39,8 @@ One Next.js app on Supabase, path-separated (single host, one server/deploy):
 - **CRM admin** (`/`, `/dashboard`, `/crm` → `/admin`) — login → registry,
   verification queue, assignments, field team, **registration links**, WhatsApp
   console, duplicate management, reports/export, audit log.
-- **Public registration** (`/a/form?id=<token>`) — token-gated, no login, no CRM UI.
+- **Public registration** (`/register`, or `/a/form?id=<token>` for personalized links) —
+  Adi Setu-branded, no login, no CRM UI.
 - **Verifier PWA** (`/verifier`, login at `/verifier/login`) — mobile-first,
   per-field verify/correct/reject/cancel/NA, offline-first; verifier role only.
 
