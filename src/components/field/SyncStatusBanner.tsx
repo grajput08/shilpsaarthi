@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { listDrafts } from '@/lib/field/drafts';
 import { CloudOff, Cloud, RefreshCw } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 export default function SyncStatusBanner() {
   const [online, setOnline] = useState(true);
@@ -29,14 +30,20 @@ export default function SyncStatusBanner() {
     <Link
       href="/verifier/sync"
       data-testid="sync-banner"
-      className="mb-5 flex items-center justify-between rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-sm shadow-sm transition-colors duration-150 hover:border-slate-300 active:bg-slate-50"
+      className={cn(
+        'mb-5 flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-sm shadow-sm',
+        'transition-[background-color,border-color] duration-150',
+        online
+          ? 'border-field-border/80 bg-field-surface hover:border-stone-300'
+          : 'border-amber-200 bg-amber-50 hover:border-amber-300',
+      )}
     >
-      <span className="flex items-center gap-2 font-medium text-slate-700">
-        {online ? <Cloud className="h-4 w-4 text-emerald-500" /> : <CloudOff className="h-4 w-4 text-amber-500" />}
+      <span className="flex items-center gap-2 font-medium text-field-ink">
+        {online ? <Cloud className="h-4 w-4 text-india-600" /> : <CloudOff className="h-4 w-4 text-amber-600" />}
         {online ? 'Online' : 'Offline — drafts saved on device'}
       </span>
-      <span className="flex items-center gap-1.5 text-slate-500">
-        {pending > 0 ? <RefreshCw className="h-3.5 w-3.5" /> : null}
+      <span className="flex items-center gap-1.5 text-field-muted">
+        {pending > 0 ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : null}
         <span className="tabular-nums">{pending}</span> pending
       </span>
     </Link>

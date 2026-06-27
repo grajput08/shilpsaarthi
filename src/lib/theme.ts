@@ -30,6 +30,17 @@ export const INDIA_GREEN_SHADES = {
   900: '#0a410a',
 } as const;
 
+/** Warm earth tones for the field-worker PWA — clay, linen, terracotta. */
+export const FIELD_EARTH = {
+  bg: '#F5F1EA',
+  surface: '#FFFFFF',
+  accent: '#A85832',
+  accentHover: '#8F4A2B',
+  ink: '#3D2E24',
+  muted: '#7A6E63',
+  border: '#E8E0D4',
+} as const;
+
 /** India flag saffron — rgb(255, 103, 31). */
 export const SAFFRON = '#ff671f';
 

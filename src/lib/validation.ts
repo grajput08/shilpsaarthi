@@ -73,6 +73,35 @@ export const artisanEditSchema = z
   })
   .default({});
 
+/** Craft profile updates from the field verifier. */
+export const craftProfileSubmitSchema = z
+  .object({
+    sub_category: z.string().max(120).optional().nullable(),
+    experience_years: z.number().int().min(0).max(80).optional().nullable(),
+    learned_from: z.string().max(120).optional().nullable(),
+    works_in_group: z.boolean().optional().nullable(),
+    group_name: z.string().max(120).optional().nullable(),
+    monthly_capacity: z.number().int().min(0).max(9999).optional().nullable(),
+  })
+  .optional();
+
+/** Product catalogue row captured during field verification. */
+export const productSubmitSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().trim().min(1).max(120),
+  category: craftEnum.optional().nullable(),
+  description: z.string().max(500).optional().nullable(),
+  materials: z.string().max(200).optional().nullable(),
+  dimensions: z.string().max(80).optional().nullable(),
+  price_min: z.number().min(0).optional().nullable(),
+  price_max: z.number().min(0).optional().nullable(),
+  monthly_capacity: z.number().int().min(0).optional().nullable(),
+  buyers: z.array(z.string().max(80)).max(10).optional(),
+  packaging_available: z.boolean().optional().nullable(),
+  can_ship: z.boolean().optional(),
+  photo_paths: z.array(z.string()).max(5).optional(),
+});
+
 /** Final field-verification submission from the verifier PWA. */
 export const verificationSubmitSchema = z.object({
   artisan_id: z.string().uuid(),
@@ -88,9 +117,13 @@ export const verificationSubmitSchema = z.object({
   consent_mode: z.string().max(80).optional().nullable(),
   market_ready: z.boolean().default(false),
   fields: artisanEditSchema,
+  craft_profile: craftProfileSubmitSchema,
+  products: z.array(productSubmitSchema).max(20).optional(),
   items: z.array(verificationItemSchema).max(24).default([]),
-  photo_paths: z.array(z.string()).max(10).optional(),
+  photo_paths: z.array(z.string()).max(16).optional(),
 });
 
 export type VerificationItemInput = z.infer<typeof verificationItemSchema>;
+export type CraftProfileSubmitInput = z.infer<typeof craftProfileSubmitSchema>;
+export type ProductSubmitInput = z.infer<typeof productSubmitSchema>;
 export type VerificationSubmitInput = z.infer<typeof verificationSubmitSchema>;

@@ -1,5 +1,5 @@
 import type { Config } from 'tailwindcss';
-import { BRAND_SHADES, INDIA_GREEN_SHADES, SAFFRON_SHADES } from './src/lib/theme';
+import { BRAND_SHADES, FIELD_EARTH, INDIA_GREEN_SHADES, SAFFRON_SHADES } from './src/lib/theme';
 
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
@@ -9,6 +9,7 @@ const config: Config = {
         brand: { ...BRAND_SHADES },
         india: { ...INDIA_GREEN_SHADES },
         saffron: { ...SAFFRON_SHADES },
+        field: { ...FIELD_EARTH },
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],

@@ -6,6 +6,15 @@ export function maskPhone(phone: string | null | undefined): string {
   return `${'•'.repeat(phone.length - 4)}${phone.slice(-4)}`;
 }
 
+/** Field PWA display: +91 94251 ••• 12 */
+export function formatFieldPhone(phone: string | null | undefined): string {
+  if (!phone) return '—';
+  const digits = phone.replace(/\D/g, '');
+  const local = digits.startsWith('91') && digits.length > 10 ? digits.slice(2) : digits;
+  if (local.length < 4) return maskPhone(phone);
+  return `+91 ${local.slice(0, 5)} ••• ${local.slice(-2)}`;
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
   const d = new Date(value);

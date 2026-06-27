@@ -70,9 +70,11 @@ function Section({
 }) {
   return (
     <section className="mb-6" data-testid={testid}>
-      <h2 className="mb-2.5 flex items-center gap-2 text-sm font-semibold tracking-tight text-slate-700">
+      <h2 className="mb-3 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-field-muted">
         {title}
-        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs tabular-nums text-slate-600">{count}</span>
+        <span className="rounded-full bg-stone-200/80 px-2 py-0.5 text-xs tabular-nums normal-case tracking-normal text-field-ink">
+          {count}
+        </span>
       </h2>
       <div className="space-y-3">{children}</div>
     </section>

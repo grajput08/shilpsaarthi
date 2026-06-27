@@ -24,7 +24,8 @@ export default async function FieldTasksPage() {
 
   return (
     <div>
-      <h1 className="mb-3 text-lg font-bold text-slate-900">Assigned Cases</h1>
+      <h1 className="mb-1 text-lg font-bold text-field-ink [text-wrap:balance]">Assigned Cases</h1>
+      <p className="mb-4 text-sm text-field-muted">Search and filter your verification queue.</p>
       <TasksList rows={rows} />
     </div>
   );

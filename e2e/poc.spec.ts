@@ -73,23 +73,34 @@ test('verifier edits a field, cancels an item, and Fully Verified is blocked wit
   await verifierLogin(page);
   await page.goto(`/verifier/artisans/${artisanId}/verify`);
 
-  // edit any field (correction)
+  // Step 1 — Identity
   await page.getByTestId('edit-full_name').fill(`${ARTISAN_NAME} (corrected)`);
-
-  // per-field/section statuses, including a cancelled one
   await page.getByTestId('item-identity').selectOption('verified');
   await page.getByTestId('item-contact').selectOption('verified');
-  await page.getByTestId('item-address').selectOption('cancelled');
-  await page.getByTestId('item-craft').selectOption('verified');
-  await page.getByTestId('item-products').selectOption('not_applicable');
-  await page.getByTestId('item-documents').selectOption('verified');
-  await page.getByTestId('item-consent').selectOption('verified');
-  await page.getByTestId('note-address').fill('Address does not match captured GPS');
+  await page.getByTestId('verify-continue').click();
 
-  await page.getByTestId('verify-consent').check();
+  // Step 2 — Address
+  await page.getByTestId('item-address').selectOption('cancelled');
+  await page.getByTestId('note-address').fill('Address does not match captured GPS');
   await page.getByTestId('capture-gps').click();
   await expect(page.getByTestId('gps-coords')).toBeVisible();
+  await page.getByTestId('verify-continue').click();
 
+  // Step 3 — Craft
+  await page.getByTestId('item-craft').selectOption('verified');
+  await page.getByTestId('verify-continue').click();
+
+  // Step 4 — Products
+  await page.getByTestId('item-products').selectOption('not_applicable');
+  await page.getByTestId('verify-continue').click();
+
+  // Step 5 — Documents & consent
+  await page.getByTestId('item-documents').selectOption('verified');
+  await page.getByTestId('item-consent').selectOption('verified');
+  await page.getByTestId('verify-consent').check();
+  await page.getByTestId('verify-continue').click();
+
+  // Step 6 — Final review
   // attempting Fully Verified is blocked because an item is cancelled
   await page.getByTestId('verify-decision').selectOption('verified');
   await page.getByTestId('verify-submit').click();

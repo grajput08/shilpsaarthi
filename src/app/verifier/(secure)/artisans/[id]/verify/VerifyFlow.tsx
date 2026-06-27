@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Button, Card, CardBody, CardHeader, FormRow, Input, Select, Textarea, Chip } from '@/components/ui';
-import { CRAFT_CATEGORY, GENDER, VERIFICATION_DECISION, enumOptions, type CraftCategory, type Gender } from '@/lib/domain';
+import { Button, FormRow, Input, Select } from '@/components/ui';
+import { GENDER, VERIFICATION_DECISION, type CraftCategory, type Gender } from '@/lib/domain';
 import { saveDraft, loadDraft, deleteDraft } from '@/lib/field/drafts';
 import { submitVerification } from './actions';
 import {
@@ -14,7 +13,24 @@ import {
   type VerifyFieldKey,
   type VerifyValues,
 } from './validators';
-import { ArrowLeft, CheckCircle2, MapPin, Camera } from 'lucide-react';
+import VerifyStepShell from '@/components/field/verify/VerifyStepShell';
+import { VERIFY_STEPS } from '@/components/field/verify/VerifyProgress';
+import GpsMapCard from '@/components/field/verify/GpsMapCard';
+import CraftStep from '@/components/field/verify/CraftStep';
+import ProductsStep from '@/components/field/verify/ProductsStep';
+import DocumentsConsentStep from '@/components/field/verify/DocumentsConsentStep';
+import FinalReviewStep from '@/components/field/verify/FinalReviewStep';
+import AadhaarVerification from '@/components/field/verify/AadhaarVerification';
+import { FieldFormCard, VerifyCheckRow } from '@/components/field/verify/VerifyFormBits';
+import {
+  craftProfileToPayload,
+  emptyCraftProfile,
+  productDraftToPayload,
+  type CraftProfileState,
+  type ProductDraft,
+} from '@/lib/field/verify-types';
+import { CheckCircle2, Camera } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface Artisan {
   id: string;
@@ -27,6 +43,8 @@ interface Artisan {
   block: string | null;
   village: string | null;
   primary_craft: CraftCategory | null;
+  idProofVerified?: boolean;
+  idProofMasked?: string | null;
 }
 
 type ItemStatus = 'pending' | 'verified' | 'corrected' | 'rejected' | 'cancelled' | 'not_applicable';
@@ -64,13 +82,58 @@ interface FieldState {
 
 type FocusEl = HTMLInputElement | HTMLSelectElement;
 
-export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
+const STEP_TITLES = [
+  { title: 'Identity verification', titleHi: 'पहचान सत्यापन' },
+  { title: 'Address & location', titleHi: 'पता और स्थान' },
+  { title: 'Craft & skill', titleHi: 'शिल्प और कौशल' },
+  { title: 'Product catalogue', titleHi: 'उत्पाद सूची' },
+  { title: 'Documents & consent', titleHi: 'दस्तावेज़ · सहमति' },
+  { title: 'Final review', titleHi: 'अंतिम समीक्षा' },
+] as const;
+
+function ItemStatusSelect({
+  itemKey,
+  value,
+  onChange,
+}: {
+  itemKey: string;
+  value: ItemStatus;
+  onChange: (s: ItemStatus) => void;
+}) {
+  return (
+    <Select
+      data-testid={`item-${itemKey}`}
+      value={value}
+      onChange={(e) => onChange(e.target.value as ItemStatus)}
+      className="text-sm"
+    >
+      {(Object.keys(ITEM_STATUS_LABEL) as ItemStatus[]).map((s) => (
+        <option key={s} value={s}>
+          {ITEM_STATUS_LABEL[s]}
+        </option>
+      ))}
+    </Select>
+  );
+}
+
+export default function VerifyFlow({
+  artisan,
+  verifierName,
+  initialCraft,
+  initialProducts = [],
+}: {
+  artisan: Artisan;
+  verifierName: string;
+  initialCraft?: CraftProfileState;
+  initialProducts?: ProductDraft[];
+}) {
   const router = useRouter();
   const loaded = useRef(false);
   const cgid = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cgid-${Date.now()}`,
   );
 
+  const [stepIndex, setStepIndex] = useState(0);
   const [fields, setFields] = useState<FieldState>({
     full_name: artisan.full_name ?? '',
     phone: artisan.phone ?? '',
@@ -86,7 +149,8 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
     Object.fromEntries(ITEMS.map((i) => [i.key, { status: 'pending' as ItemStatus, note: '' }])),
   );
   const [consent, setConsent] = useState(false);
-  const [consentMode, setConsentMode] = useState('Verifier read aloud');
+  const [consentMode, setConsentMode] = useState('Verifier read aloud in local language');
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [acc, setAcc] = useState<number | null>(null);
@@ -95,12 +159,18 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
+  const [craftPhotos, setCraftPhotos] = useState<string[]>([]);
+  const [craftProfile, setCraftProfile] = useState<CraftProfileState>(initialCraft ?? emptyCraftProfile());
+  const [products, setProducts] = useState<ProductDraft[]>(initialProducts);
+  const [livePhoto, setLivePhoto] = useState<string | null>(null);
+  const [aadhaarVerified, setAadhaarVerified] = useState(artisan.idProofVerified ?? false);
+  const [aadhaarMasked, setAadhaarMasked] = useState(artisan.idProofMasked ?? '');
+  const [landmarkNote, setLandmarkNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
-  // Inline field validation state.
   const [errors, setErrors] = useState<VerifyErrors>({});
   const [touched, setTouched] = useState<Set<VerifyFieldKey>>(new Set());
   const [shaking, setShaking] = useState<Set<VerifyFieldKey>>(new Set());
@@ -111,14 +181,12 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
 
   const values: VerifyValues = { full_name: fields.full_name, phone: fields.phone, decision, reason };
 
-  // Keep inline errors for already-touched fields in sync as values change.
   useEffect(() => {
     if (touched.size === 0) {
       setErrors((prev) => (Object.keys(prev).length ? {} : prev));
       return;
     }
-    const current: VerifyValues = { full_name: fields.full_name, phone: fields.phone, decision, reason };
-    const { errors: all } = validateAll(current);
+    const { errors: all } = validateAll(values);
     setErrors(() => {
       const next: VerifyErrors = {};
       touched.forEach((f) => {
@@ -128,7 +196,15 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
     });
   }, [fields.full_name, fields.phone, decision, reason, touched]);
 
-  // restore draft
+  useEffect(() => {
+    if (artisan.idProofVerified) {
+      setItem('identity', { status: 'verified' });
+      setItem('contact', { status: 'verified' });
+      setItem('documents', { status: 'verified' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once for pre-verified artisans
+  }, [artisan.idProofVerified]);
+
   useEffect(() => {
     const d = loadDraft(artisan.id);
     if (d?.data) {
@@ -136,14 +212,22 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
       if (data.fields) setFields(data.fields as FieldState);
       if (data.items) setItems(data.items as Record<string, { status: ItemStatus; note: string }>);
       if (typeof data.consent === 'boolean') setConsent(data.consent);
+      if (typeof data.consentMode === 'string') setConsentMode(data.consentMode);
       if (typeof data.decision === 'string') setDecision(data.decision as keyof typeof VERIFICATION_DECISION);
       if (typeof data.notes === 'string') setNotes(data.notes);
+      if (typeof data.stepIndex === 'number') setStepIndex(data.stepIndex);
+      if (typeof data.landmarkNote === 'string') setLandmarkNote(data.landmarkNote);
+      if (typeof data.addressConfirmed === 'boolean') setAddressConfirmed(data.addressConfirmed);
+      if (data.craftProfile) setCraftProfile(data.craftProfile as CraftProfileState);
+      if (data.products) setProducts(data.products as ProductDraft[]);
+      if (data.craftPhotos) setCraftPhotos(data.craftPhotos as string[]);
+      if (typeof data.aadhaarVerified === 'boolean') setAadhaarVerified(data.aadhaarVerified);
+      if (typeof data.aadhaarMasked === 'string') setAadhaarMasked(data.aadhaarMasked);
       if (data.clientGeneratedId) cgid.current = data.clientGeneratedId as string;
     }
     loaded.current = true;
   }, [artisan.id]);
 
-  // autosave draft
   useEffect(() => {
     if (!loaded.current) return;
     const now = new Date().toISOString();
@@ -153,10 +237,34 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
       clientGeneratedId: cgid.current,
       updatedAt: now,
       status: 'draft',
-      data: { fields, items, consent, decision, notes, clientGeneratedId: cgid.current },
+      data: {
+        fields,
+        items,
+        consent,
+        consentMode,
+        decision,
+        notes,
+        stepIndex,
+        landmarkNote,
+        addressConfirmed,
+        craftProfile,
+        products,
+        craftPhotos,
+        aadhaarVerified,
+        aadhaarMasked,
+        clientGeneratedId: cgid.current,
+      },
     });
     setSavedAt(now);
-  }, [fields, items, consent, decision, notes, artisan.id]);
+  }, [fields, items, consent, consentMode, decision, notes, stepIndex, landmarkNote, addressConfirmed, craftProfile, products, craftPhotos, aadhaarVerified, aadhaarMasked, artisan.id]);
+
+  function handleAadhaarVerified(masked: string) {
+    setAadhaarVerified(true);
+    setAadhaarMasked(masked);
+    setItem('identity', { status: 'verified', note: 'Aadhaar OTP verified' });
+    setItem('contact', { status: 'verified', note: 'Linked mobile via Aadhaar' });
+    setItem('documents', { status: 'verified', note: `ID proof: ${masked}` });
+  }
 
   function setItem(key: string, patch: Partial<{ status: ItemStatus; note: string }>) {
     setItems((m) => ({ ...m, [key]: { ...m[key], ...patch } }));
@@ -166,7 +274,6 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
     setTouched((t) => (t.has(field) ? t : new Set(t).add(field)));
   }
 
-  // setTimeout (not rAF) so the shake still fires when the tab is backgrounded.
   function triggerShake(keys: VerifyFieldKey[]) {
     setShaking(new Set());
     setTimeout(() => setShaking(new Set(keys)), 0);
@@ -174,7 +281,10 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
 
   function captureGps() {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setLat(22.9412); setLng(81.0784); setAcc(25); setItem('address', { status: 'verified' });
+      setLat(22.9412);
+      setLng(81.0784);
+      setAcc(25);
+      setItem('address', { status: 'verified' });
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -188,23 +298,44 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
     );
   }
 
-  async function onPhotos(files: FileList | null) {
-    if (!files) return;
-    const list = Array.from(files).slice(0, 4);
-    const urls = await Promise.all(
-      list.map(
-        (f) =>
-          new Promise<string>((resolve) => {
-            const r = new FileReader();
-            r.onload = () => resolve(r.result as string);
-            r.readAsDataURL(f);
-          }),
-      ),
+  async function onPhotos(files: FileList | null, target: 'evidence' | 'live' | 'landmark' | 'craft') {
+    if (!files?.[0]) return;
+    const readOne = (f: File) =>
+      new Promise<string>((resolve) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.readAsDataURL(f);
+      });
+    if (target === 'evidence' && files.length > 1) {
+      const urls = await Promise.all(Array.from(files).slice(0, 4).map(readOne));
+      setPhotos((p) => [...p, ...urls].slice(0, 8));
+      return;
+    }
+    const url = await readOne(files[0]);
+    if (target === 'live') setLivePhoto(url);
+    else if (target === 'landmark') setPhotos((p) => [url, ...p].slice(0, 8));
+    else if (target === 'craft') setCraftPhotos((p) => [...p, url].slice(0, 3));
+    else setPhotos((p) => [...p, url].slice(0, 8));
+  }
+
+  async function onProductPhoto(productId: string, files: FileList | null) {
+    if (!files?.[0]) return;
+    const url = await new Promise<string>((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.readAsDataURL(files[0]);
+    });
+    setProducts((list) =>
+      list.map((p) => (p.id === productId ? { ...p, photo_paths: [...p.photo_paths, url].slice(0, 5) } : p)),
     );
-    setPhotos((p) => [...p, ...urls].slice(0, 8));
   }
 
   const hasBlocking = Object.values(items).some((i) => i.status === 'rejected' || i.status === 'cancelled');
+
+  const isClear = (key: string) => {
+    const s = items[key]?.status;
+    return s === 'verified' || s === 'corrected';
+  };
 
   function buildPayload() {
     return {
@@ -212,7 +343,7 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
       client_generated_id: cgid.current,
       decision: decision as keyof typeof VERIFICATION_DECISION,
       reason: reason || null,
-      notes: notes || null,
+      notes: [notes, landmarkNote ? `Landmark: ${landmarkNote}` : ''].filter(Boolean).join('\n') || null,
       latitude: lat,
       longitude: lng,
       gps_accuracy_m: acc,
@@ -230,42 +361,100 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
         village: fields.village || undefined,
         primary_craft: (fields.primary_craft || undefined) as CraftCategory | undefined,
       },
+      craft_profile: craftProfileToPayload(craftProfile),
+      products: products.filter((p) => p.name.trim()).map(productDraftToPayload),
       items: ITEMS.map((it) => ({
         item_key: it.key,
         item_label: it.label,
         status: items[it.key].status,
         note: items[it.key].note || null,
       })),
-      photo_paths: photos,
+      photo_paths: [livePhoto, ...craftPhotos, ...photos].filter(Boolean) as string[],
     };
   }
 
-  async function submit() {
+  const reviewChecklist = [
+    { label: 'Identity verified', done: isClear('identity') || aadhaarVerified },
+    { label: 'Craft verified', done: isClear('craft') },
+    { label: 'Consent captured', done: consent && isClear('consent') },
+    { label: 'Duplicate checked', done: aadhaarVerified || isClear('identity') },
+    { label: 'Location verified', done: isClear('address') && lat != null },
+    { label: 'Product photos', done: isClear('products') || products.some((p) => p.photo_paths.length > 0) },
+    { label: 'Documents checked', done: isClear('documents') },
+    { label: 'Market readiness', done: marketReady, partial: !marketReady && decision === 'verified' },
+  ];
+
+  function validateCurrentStep(): boolean {
     setError(null);
-
-    // 1) Field-level validation first — block, shake, and focus the first error.
-    const { errors: fieldErrors, firstInvalid } = validateAll(values);
-    if (firstInvalid) {
-      setTouched((t) => {
-        const n = new Set(t);
-        (Object.keys(fieldErrors) as VerifyFieldKey[]).forEach((f) => n.add(f));
-        return n;
+    if (stepIndex === 0) {
+      markTouched('full_name');
+      markTouched('phone');
+      const { errors: fieldErrors, firstInvalid } = validateAll({
+        ...values,
+        decision: 'verified',
+        reason: '',
       });
-      setErrors(fieldErrors);
-      triggerShake(Object.keys(fieldErrors) as VerifyFieldKey[]);
-      fieldRefs.current[firstInvalid]?.focus();
+      const stepErrors: VerifyErrors = {};
+      if (fieldErrors.full_name) stepErrors.full_name = fieldErrors.full_name;
+      if (fieldErrors.phone) stepErrors.phone = fieldErrors.phone;
+      if (Object.keys(stepErrors).length) {
+        setErrors(stepErrors);
+        triggerShake(Object.keys(stepErrors) as VerifyFieldKey[]);
+        if (firstInvalid === 'full_name' || firstInvalid === 'phone') fieldRefs.current[firstInvalid]?.focus();
+        return false;
+      }
+    }
+    if (stepIndex === 4) {
+      if (!consent) {
+        setError('Verification cannot continue without consent.');
+        return false;
+      }
+    }
+    if (stepIndex === 5) {
+      const { errors: fieldErrors, firstInvalid } = validateAll(values);
+      if (firstInvalid) {
+        setTouched((t) => {
+          const n = new Set(t);
+          (Object.keys(fieldErrors) as VerifyFieldKey[]).forEach((f) => n.add(f));
+          return n;
+        });
+        setErrors(fieldErrors);
+        triggerShake(Object.keys(fieldErrors) as VerifyFieldKey[]);
+        fieldRefs.current[firstInvalid]?.focus();
+        return false;
+      }
+      if (decision === 'verified' && hasBlocking) {
+        setError('Some items are rejected/cancelled — Fully Verified requires an admin override. Choose Needs Correction, or ask an admin to override.');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function goNext() {
+    if (stepIndex < VERIFY_STEPS.length - 1) {
+      if (!validateCurrentStep()) return;
+      setStepIndex((s) => s + 1);
+      setError(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
+    void submit();
+  }
 
-    // 2) Cross-field business rule: Fully Verified needs a clean item list.
-    if (decision === 'verified' && hasBlocking) {
-      setError('Some items are rejected/cancelled — Fully Verified requires an admin override. Choose Needs Correction, or ask an admin to override.');
+  function goBack() {
+    if (stepIndex > 0) {
+      setStepIndex((s) => s - 1);
+      setError(null);
       return;
     }
+    router.push(`/verifier/artisans/${artisan.id}`);
+  }
 
+  async function submit() {
+    if (!validateCurrentStep()) return;
     setSubmitting(true);
     const payload = buildPayload();
-    // mark draft pending while syncing
     saveDraft({
       artisanId: artisan.id,
       artisanName: fields.full_name,
@@ -300,254 +489,319 @@ export default function VerifyFlow({ artisan }: { artisan: Artisan }) {
   const nameValid = touched.has('full_name') && !errors.full_name && fields.full_name.trim().length > 0;
   const phoneValid = touched.has('phone') && !errors.phone && fields.phone.trim().length > 0;
   const needsReason = reasonRequired(decision);
+  const isLastStep = stepIndex === VERIFY_STEPS.length - 1;
 
   if (done) {
     return (
       <div data-testid="verify-success" className="flex flex-col items-center pt-12 text-center">
-        <span className="animate-pop-in flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
-          <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+        <span className="animate-pop-in flex h-16 w-16 items-center justify-center rounded-full bg-india-50">
+          <CheckCircle2 className="h-10 w-10 text-india-600" />
         </span>
-        <h1 className="mt-5 text-xl font-bold tracking-tight text-slate-900 [text-wrap:balance]">
+        <h1 className="mt-5 text-xl font-bold tracking-tight text-field-ink [text-wrap:balance]">
           Verification submitted
         </h1>
-        <p className="mt-2 text-slate-600 [text-wrap:pretty]">
+        <p className="mt-2 text-field-muted [text-wrap:pretty]">
           Final status:{' '}
-          <strong className="font-semibold text-slate-800">
+          <strong className="font-semibold text-field-ink">
             {VERIFICATION_DECISION[decision as keyof typeof VERIFICATION_DECISION]?.label}
           </strong>
           .
         </p>
-        <Button className="mt-6" onClick={() => router.push('/verifier')}>
+        <Button className="mt-6 bg-field-accent hover:bg-field-accentHover" onClick={() => router.push('/verifier')}>
           Back to Today&apos;s Work
         </Button>
       </div>
     );
   }
 
+  const { title, titleHi } = STEP_TITLES[stepIndex];
+
   return (
-    <div className="space-y-4">
-      <header>
-        <Link
-          href={`/verifier/artisans/${artisan.id}`}
-          className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to profile
-        </Link>
-        <h1 className="mt-1.5 text-xl font-bold tracking-tight text-slate-900">Verify &amp; correct</h1>
-        {savedAt ? (
-          <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-emerald-600" data-testid="draft-saved">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Draft saved on device
-          </p>
-        ) : null}
-      </header>
-
-      {/* Editable fields */}
-      <Card>
-        <CardHeader title="Artisan details" subtitle="Edit any field to record a correction." />
-        <CardBody className="grid grid-cols-2 gap-3">
-          <FormRow
-            label="Full name"
-            htmlFor="f-name"
-            className="col-span-2"
-            error={errors.full_name}
-            valid={nameValid}
-            shake={shaking.has('full_name')}
-            errorId="err-f-name"
-          >
-            <Input
-              id="f-name"
-              ref={setRef('full_name')}
-              data-testid="edit-full_name"
-              aria-describedby={errors.full_name ? 'err-f-name' : undefined}
-              invalid={!!errors.full_name}
-              valid={nameValid}
-              value={fields.full_name}
-              onChange={(e) => setFields((f) => ({ ...f, full_name: e.target.value }))}
-              onBlur={() => markTouched('full_name')}
-            />
-          </FormRow>
-          <FormRow
-            label="Phone"
-            htmlFor="f-phone"
-            error={errors.phone}
-            valid={phoneValid}
-            shake={shaking.has('phone')}
-            errorId="err-f-phone"
-          >
-            <Input
-              id="f-phone"
-              ref={setRef('phone')}
-              data-testid="edit-phone"
-              inputMode="numeric"
-              maxLength={10}
-              aria-describedby={errors.phone ? 'err-f-phone' : undefined}
-              invalid={!!errors.phone}
-              valid={phoneValid}
-              value={fields.phone}
-              onChange={(e) => setFields((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '') }))}
-              onBlur={() => markTouched('phone')}
-            />
-          </FormRow>
-          <FormRow label="Gender" htmlFor="f-gender">
-            <Select id="f-gender" value={fields.gender} onChange={(e) => setFields((f) => ({ ...f, gender: e.target.value as Gender }))}>
-              <option value="">—</option>
-              {enumOptions(GENDER).map((g) => <option key={g} value={g}>{GENDER[g]}</option>)}
-            </Select>
-          </FormRow>
-          <FormRow label="Tribe / community" htmlFor="f-tribe" className="col-span-2">
-            <Input id="f-tribe" value={fields.tribe_community} onChange={(e) => setFields((f) => ({ ...f, tribe_community: e.target.value }))} />
-          </FormRow>
-          <FormRow label="State" htmlFor="f-state"><Input id="f-state" value={fields.state} onChange={(e) => setFields((f) => ({ ...f, state: e.target.value }))} /></FormRow>
-          <FormRow label="District" htmlFor="f-district"><Input id="f-district" value={fields.district} onChange={(e) => setFields((f) => ({ ...f, district: e.target.value }))} /></FormRow>
-          <FormRow label="Block" htmlFor="f-block"><Input id="f-block" value={fields.block} onChange={(e) => setFields((f) => ({ ...f, block: e.target.value }))} /></FormRow>
-          <FormRow label="Village" htmlFor="f-village"><Input id="f-village" value={fields.village} onChange={(e) => setFields((f) => ({ ...f, village: e.target.value }))} /></FormRow>
-          <FormRow label="Craft" htmlFor="f-craft" className="col-span-2">
-            <Select id="f-craft" value={fields.primary_craft} onChange={(e) => setFields((f) => ({ ...f, primary_craft: e.target.value as CraftCategory }))}>
-              <option value="">—</option>
-              {enumOptions(CRAFT_CATEGORY).map((c) => <option key={c} value={c}>{CRAFT_CATEGORY[c]}</option>)}
-            </Select>
-          </FormRow>
-        </CardBody>
-      </Card>
-
-      {/* GPS + consent */}
-      <Card>
-        <CardHeader title="Consent & location" />
-        <CardBody className="space-y-3">
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-700 transition-colors hover:bg-slate-50">
-            <input type="checkbox" data-testid="verify-consent" className="mt-0.5 h-5 w-5 cursor-pointer rounded accent-brand-600" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-            <span>Artisan understood and gave consent</span>
-          </label>
-          <FormRow label="Consent mode" htmlFor="cmode">
-            <Select id="cmode" value={consentMode} onChange={(e) => setConsentMode(e.target.value)}>
-              <option>Artisan read themselves</option>
-              <option>Verifier read aloud</option>
-              <option>Local language explanation given</option>
-            </Select>
-          </FormRow>
-          <Button type="button" variant="secondary" onClick={captureGps} data-testid="capture-gps">
-            <MapPin className="h-4 w-4" /> Capture GPS
-          </Button>
-          {lat != null ? (
-            <p className="flex items-center gap-1.5 text-sm font-medium text-slate-600" data-testid="gps-coords">
-              <MapPin className="h-4 w-4 text-india-600" /> {lat}, {lng} <span className="text-slate-400">(±{acc}m)</span>
-            </p>
-          ) : (
-            <p className="text-sm text-slate-400">No GPS captured.</p>
-          )}
-        </CardBody>
-      </Card>
-
-      {/* Per-item statuses */}
-      <Card>
-        <CardHeader title="Field / section verification" subtitle="Mark each as verified, corrected, rejected, cancelled or N/A." />
-        <CardBody className="space-y-3">
-          {ITEMS.map((it) => (
-            <div
-              key={it.key}
-              className="rounded-xl border border-slate-200 p-3 transition-colors focus-within:border-brand-300"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-slate-700">{it.label}</span>
-                <Select
-                  data-testid={`item-${it.key}`}
-                  value={items[it.key].status}
-                  onChange={(e) => setItem(it.key, { status: e.target.value as ItemStatus })}
-                  className="w-40"
-                >
-                  {(Object.keys(ITEM_STATUS_LABEL) as ItemStatus[]).map((s) => (
-                    <option key={s} value={s}>{ITEM_STATUS_LABEL[s]}</option>
-                  ))}
-                </Select>
+    <VerifyStepShell
+      artisanId={artisan.id}
+      artisanName={fields.full_name || artisan.full_name}
+      title={title}
+      titleHi={titleHi}
+      stepIndex={stepIndex}
+      savedAt={savedAt}
+      onBack={goBack}
+      onContinue={goNext}
+      continueLabel={isLastStep ? 'Submit Verification ✓' : 'Save & Continue'}
+      continueLoading={submitting}
+      continueTestId={isLastStep ? 'verify-submit' : 'verify-continue'}
+      continueClassName={isLastStep ? 'bg-india-700 hover:bg-india-800' : undefined}
+    >
+      {stepIndex === 0 ? (
+        <>
+          <FieldFormCard>
+            <div className="flex gap-4">
+              <label className="flex h-24 w-24 shrink-0 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-field-border bg-stone-50/80 text-field-muted transition-colors hover:border-field-accent hover:bg-field-accent/5">
+                {livePhoto ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={livePhoto} alt="Live capture" className="h-full w-full rounded-lg object-cover" />
+                ) : (
+                  <>
+                    <Camera className="h-6 w-6" />
+                    <span className="mt-1 text-[10px] font-medium">Live photo</span>
+                  </>
+                )}
+                <input type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => onPhotos(e.target.files, 'live')} />
+              </label>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-field-ink">Live photo / लाइव फ़ोटो</p>
+                <p className="mt-0.5 text-xs text-field-muted [text-wrap:pretty]">Capture artisan at visit location.</p>
+                <label className="mt-2 inline-flex cursor-pointer rounded-lg border border-field-accent px-3 py-1.5 text-xs font-semibold text-field-accent hover:bg-field-accent/5">
+                  Capture photo
+                  <input type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => onPhotos(e.target.files, 'live')} />
+                </label>
               </div>
-              <Input
-                placeholder="Note / evidence (optional)"
-                data-testid={`note-${it.key}`}
-                value={items[it.key].note}
-                onChange={(e) => setItem(it.key, { note: e.target.value })}
-                className="mt-2 text-sm"
-              />
             </div>
-          ))}
-          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-3 text-sm font-medium text-slate-600 transition-colors hover:border-brand-300 hover:bg-brand-50/40">
-            <Camera className="h-4 w-4" /> Attach evidence photos
-            <input type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={(e) => onPhotos(e.target.files)} />
-          </label>
-          {photos.length > 0 ? <Chip tone="green">{photos.length} photo(s) attached</Chip> : null}
-        </CardBody>
-      </Card>
+          </FieldFormCard>
 
-      {/* Final decision */}
-      <Card>
-        <CardHeader title="Final status" />
-        <CardBody className="space-y-3">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" data-testid="verify-market-ready" className="h-5 w-5 cursor-pointer rounded accent-brand-600" checked={marketReady} onChange={(e) => setMarketReady(e.target.checked)} />
-            Market readiness assessed
-          </label>
-          {hasBlocking ? (
-            <p className="animate-step-enter rounded-xl bg-amber-50 px-3 py-2.5 text-xs font-medium text-amber-800" data-testid="blocking-warning">
-              Some items are rejected/cancelled — “Fully Verified” needs an admin override.
-            </p>
-          ) : null}
-          <FormRow
-            label="Decision"
-            htmlFor="decision"
-            required
-            error={errors.decision}
-            shake={shaking.has('decision')}
-            errorId="err-decision"
-          >
-            <Select
-              id="decision"
-              ref={setRef('decision')}
-              data-testid="verify-decision"
-              aria-describedby={errors.decision ? 'err-decision' : undefined}
-              invalid={!!errors.decision}
-              value={decision}
-              onChange={(e) => setDecision(e.target.value as typeof decision)}
-              onBlur={() => markTouched('decision')}
-            >
-              <option value="">Select…</option>
-              {enumOptions(VERIFICATION_DECISION).map((d) => (
-                <option key={d} value={d}>{VERIFICATION_DECISION[d].label}</option>
-              ))}
-            </Select>
-          </FormRow>
-          {decision && decision !== 'verified' ? (
+          <FieldFormCard className="grid grid-cols-2 gap-3">
             <FormRow
-              label="Reason"
-              htmlFor="reason"
-              required={needsReason}
-              error={errors.reason}
-              shake={shaking.has('reason')}
-              errorId="err-reason"
+              label="Full name · पूरा नाम"
+              htmlFor="f-name"
+              className="col-span-2"
+              error={errors.full_name}
+              valid={nameValid}
+              shake={shaking.has('full_name')}
+              errorId="err-f-name"
             >
               <Input
-                id="reason"
-                ref={setRef('reason')}
-                data-testid="verify-reason"
-                aria-describedby={errors.reason ? 'err-reason' : undefined}
-                invalid={!!errors.reason}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                onBlur={() => markTouched('reason')}
+                id="f-name"
+                ref={setRef('full_name')}
+                data-testid="edit-full_name"
+                invalid={!!errors.full_name}
+                valid={nameValid}
+                value={fields.full_name}
+                onChange={(e) => setFields((f) => ({ ...f, full_name: e.target.value }))}
+                onBlur={() => markTouched('full_name')}
               />
             </FormRow>
-          ) : null}
-          <FormRow label="Verifier notes" htmlFor="notes">
-            <Textarea id="notes" data-testid="verify-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </FormRow>
+            <FormRow
+              label="Mobile · मोबाइल"
+              htmlFor="f-phone"
+              error={errors.phone}
+              valid={phoneValid}
+              shake={shaking.has('phone')}
+              errorId="err-f-phone"
+            >
+              <Input
+                id="f-phone"
+                ref={setRef('phone')}
+                data-testid="edit-phone"
+                inputMode="numeric"
+                maxLength={10}
+                invalid={!!errors.phone}
+                valid={phoneValid}
+                value={fields.phone}
+                onChange={(e) => setFields((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '') }))}
+                onBlur={() => markTouched('phone')}
+              />
+            </FormRow>
+            <FormRow label="Tribe · जनजाति" htmlFor="f-tribe">
+              <Input
+                id="f-tribe"
+                value={fields.tribe_community}
+                onChange={(e) => setFields((f) => ({ ...f, tribe_community: e.target.value }))}
+              />
+            </FormRow>
+            <div className="col-span-2">
+              <p className="mb-2 text-xs font-medium text-field-muted">Gender · लिंग</p>
+              <div className="grid grid-cols-3 gap-2">
+                {(['female', 'male', 'other'] as const).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setFields((f) => ({ ...f, gender: g }))}
+                    className={cn(
+                      'min-h-[44px] rounded-xl text-sm font-semibold transition-colors duration-150',
+                      fields.gender === g
+                        ? 'bg-brand-700 text-white shadow-sm'
+                        : 'bg-stone-100/80 text-field-muted hover:bg-stone-200/80',
+                    )}
+                  >
+                    {g === 'female' ? 'महिला' : g === 'male' ? 'पुरुष' : 'Other'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </FieldFormCard>
+
+          <FieldFormCard className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-field-muted">Verification checks</p>
+            <AadhaarVerification
+              artisanId={artisan.id}
+              initialVerified={aadhaarVerified}
+              initialMasked={aadhaarMasked}
+              onVerified={handleAadhaarVerified}
+            />
+            {/* Hidden selects for automated tests */}
+            <select
+              data-testid="item-identity"
+              value={items.identity.status}
+              onChange={(e) => setItem('identity', { status: e.target.value as ItemStatus })}
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden
+            >
+              {(Object.keys(ITEM_STATUS_LABEL) as ItemStatus[]).map((s) => (
+                <option key={s} value={s}>{ITEM_STATUS_LABEL[s]}</option>
+              ))}
+            </select>
+            <select
+              data-testid="item-contact"
+              value={items.contact.status}
+              onChange={(e) => setItem('contact', { status: e.target.value as ItemStatus })}
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden
+            >
+              {(Object.keys(ITEM_STATUS_LABEL) as ItemStatus[]).map((s) => (
+                <option key={s} value={s}>{ITEM_STATUS_LABEL[s]}</option>
+              ))}
+            </select>
+          </FieldFormCard>
+        </>
+      ) : null}
+
+      {stepIndex === 1 ? (
+        <>
+          <GpsMapCard lat={lat} lng={lng} acc={acc} onRecapture={captureGps} />
+          <FieldFormCard className="grid grid-cols-2 gap-3">
+            <FormRow label="State" htmlFor="f-state">
+              <Input id="f-state" value={fields.state} onChange={(e) => setFields((f) => ({ ...f, state: e.target.value }))} />
+            </FormRow>
+            <FormRow label="District" htmlFor="f-district">
+              <Input id="f-district" value={fields.district} onChange={(e) => setFields((f) => ({ ...f, district: e.target.value }))} />
+            </FormRow>
+            <FormRow label="Block / Taluka" htmlFor="f-block">
+              <Input id="f-block" value={fields.block} onChange={(e) => setFields((f) => ({ ...f, block: e.target.value }))} />
+            </FormRow>
+            <FormRow label="Village / Hamlet" htmlFor="f-village">
+              <Input id="f-village" value={fields.village} onChange={(e) => setFields((f) => ({ ...f, village: e.target.value }))} />
+            </FormRow>
+          </FieldFormCard>
+          <FieldFormCard>
+            <p className="mb-2 text-xs font-medium text-field-muted">Landmark photo</p>
+            <div className="flex gap-3">
+              <label className="flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-field-border bg-stone-50/80">
+                <Camera className="h-5 w-5 text-field-muted" />
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => onPhotos(e.target.files, 'landmark')} />
+              </label>
+              <Input
+                placeholder="Near landmark, lane, cluster…"
+                value={landmarkNote}
+                onChange={(e) => setLandmarkNote(e.target.value)}
+                className="flex-1 text-sm"
+              />
+            </div>
+          </FieldFormCard>
+          <FieldFormCard className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium text-field-ink">Address & GPS status</span>
+              <ItemStatusSelect itemKey="address" value={items.address.status} onChange={(s) => setItem('address', { status: s })} />
+            </div>
+            <Input
+              placeholder="Note / evidence (optional)"
+              data-testid="note-address"
+              value={items.address.note}
+              onChange={(e) => setItem('address', { note: e.target.value })}
+              className="text-sm"
+            />
+            <VerifyCheckRow
+              checked={lat != null}
+              label="GPS captured at visit location"
+              disabled
+            />
+            <VerifyCheckRow
+              checked={addressConfirmed}
+              label="Address confirmed by artisan"
+              onChange={setAddressConfirmed}
+            />
+          </FieldFormCard>
+        </>
+      ) : null}
+
+      {stepIndex === 2 ? (
+        <CraftStep
+          primaryCraft={fields.primary_craft}
+          onPrimaryCraftChange={(c) => setFields((f) => ({ ...f, primary_craft: c }))}
+          craft={craftProfile}
+          onCraftChange={(patch) => setCraftProfile((cp) => ({ ...cp, ...patch }))}
+          craftPhotos={craftPhotos}
+          onAddCraftPhoto={(files) => void onPhotos(files, 'craft')}
+          itemStatus={items.craft.status}
+          onItemStatusChange={(s) => setItem('craft', { status: s })}
+          itemNote={items.craft.note}
+          onItemNoteChange={(note) => setItem('craft', { note })}
+        />
+      ) : null}
+
+      {stepIndex === 3 ? (
+        <ProductsStep
+          products={products}
+          onProductsChange={setProducts}
+          itemStatus={items.products.status}
+          onItemStatusChange={(s) => setItem('products', { status: s })}
+          itemNote={items.products.note}
+          onItemNoteChange={(note) => setItem('products', { note })}
+          onAddPhoto={(id, files) => void onProductPhoto(id, files)}
+        />
+      ) : null}
+
+      {stepIndex === 4 ? (
+        <DocumentsConsentStep
+          documentsStatus={items.documents.status}
+          onDocumentsStatusChange={(s) => setItem('documents', { status: s })}
+          documentsNote={items.documents.note}
+          onDocumentsNoteChange={(note) => setItem('documents', { note })}
+          consentItemStatus={items.consent.status}
+          onConsentItemStatusChange={(s) => setItem('consent', { status: s })}
+          consent={consent}
+          onConsentChange={setConsent}
+          consentMode={consentMode}
+          onConsentModeChange={setConsentMode}
+          verifierName={verifierName}
+          lat={lat}
+          lng={lng}
+          acc={acc}
+        />
+      ) : null}
+
+      {stepIndex === 5 ? (
+        <>
+          <FinalReviewStep
+            checklist={reviewChecklist}
+            decision={decision}
+            onDecisionChange={setDecision}
+            reason={reason}
+            onReasonChange={setReason}
+            notes={notes}
+            onNotesChange={setNotes}
+            marketReady={marketReady}
+            onMarketReadyChange={setMarketReady}
+            hasBlocking={hasBlocking}
+            errors={errors}
+            needsReason={needsReason}
+            setRef={setRef}
+            markTouched={markTouched}
+            shaking={shaking}
+          />
           {error ? (
             <p data-testid="verify-error" role="alert" className="animate-step-enter rounded-xl bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700">
               {error}
             </p>
           ) : null}
-          <Button block type="button" data-testid="verify-submit" loading={submitting} onClick={submit}>
-            {submitting ? 'Submitting…' : 'Submit verification'}
-          </Button>
-        </CardBody>
-      </Card>
-    </div>
+        </>
+      ) : null}
+
+      {error && stepIndex !== 5 ? (
+        <p role="alert" className="rounded-xl bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700">
+          {error}
+        </p>
+      ) : null}
+    </VerifyStepShell>
   );
 }

@@ -53,10 +53,10 @@ export default function TasksList({ rows }: { rows: Row[] }) {
             className={cn(
               'rounded-full px-3.5 py-1.5 text-sm font-medium',
               'transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-field-accent/40',
               filter === f.key
-                ? 'bg-brand-600 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                ? 'bg-field-accent text-white shadow-sm'
+                : 'bg-stone-100/80 text-field-muted hover:bg-stone-200/80',
             )}
           >
             {f.label}

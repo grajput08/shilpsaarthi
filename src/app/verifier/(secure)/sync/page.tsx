@@ -49,8 +49,8 @@ export default function SyncPage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-lg font-bold text-slate-900">Sync Queue</h1>
-      <p className="mb-4 text-sm text-slate-500">
+      <h1 className="mb-1 text-lg font-bold text-field-ink">Sync Queue</h1>
+      <p className="mb-4 text-sm text-field-muted">
         {online ? 'Online' : 'Offline'} · Last sync {lastSync ? relativeTime(lastSync) : '—'}
       </p>
 

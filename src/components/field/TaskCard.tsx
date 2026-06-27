@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { Card } from '@/components/ui';
 import { ArtisanStatusBadge, PriorityBadge } from '@/components/badges';
 import { CRAFT_CATEGORY, type ArtisanStatus, type CraftCategory, type PriorityLevel } from '@/lib/domain';
-import { Phone, MessageCircle, Navigation, MapPin } from 'lucide-react';
+import { Phone, MessageCircle, Compass, MapPin } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 export interface TaskArtisan {
   id: string;
@@ -16,20 +17,22 @@ export interface TaskArtisan {
 }
 
 const iconBtn =
-  'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition-colors duration-150 hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100';
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-field-border bg-field-surface text-field-muted transition-[background-color,border-color,transform] duration-150 hover:border-stone-300 hover:bg-stone-50 active:scale-[0.96] motion-reduce:active:scale-100';
 
 export default function TaskCard({ artisan, cta = 'Start Visit' }: { artisan: TaskArtisan; cta?: string }) {
   const mapsQuery = [artisan.village, artisan.district].filter(Boolean).join(' ');
+  const location = [artisan.village, artisan.district].filter(Boolean).join(', ');
+
   return (
-    <Card className="p-4 transition-shadow duration-150 hover:shadow-pop">
+    <Card className="border-field-border/80 bg-field-surface p-4 transition-[box-shadow,transform] duration-150 hover:shadow-pop">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold tracking-tight text-slate-900">{artisan.full_name}</p>
-          <p className="mt-0.5 flex items-center gap-1 text-sm text-slate-500">
+          <p className="truncate text-base font-bold tracking-tight text-field-ink">{artisan.full_name}</p>
+          <p className="mt-0.5 flex items-center gap-1 text-sm text-field-muted">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{[artisan.village, artisan.district].filter(Boolean).join(', ') || '—'}</span>
+            <span className="truncate">{location || '—'}</span>
           </p>
-          <p className="mt-0.5 truncate text-sm text-slate-500">
+          <p className="mt-0.5 truncate text-sm text-field-muted">
             {artisan.primary_craft ? CRAFT_CATEGORY[artisan.primary_craft] : 'Craft not set'}
           </p>
         </div>
@@ -43,7 +46,10 @@ export default function TaskCard({ artisan, cta = 'Start Visit' }: { artisan: Ta
         <Link
           href={`/verifier/artisans/${artisan.id}`}
           data-testid="task-start"
-          className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-brand-600 px-3 text-sm font-semibold text-white shadow-sm transition-[background-color,transform] duration-150 ease-out hover:bg-brand-700 active:scale-[0.98] motion-reduce:active:scale-100"
+          className={cn(
+            'flex min-h-[44px] flex-1 items-center justify-center rounded-xl px-3 text-sm font-semibold text-white shadow-sm',
+            'bg-field-accent transition-[background-color,transform] duration-150 ease-out hover:bg-field-accentHover active:scale-[0.98] motion-reduce:active:scale-100',
+          )}
         >
           {cta}
         </Link>
@@ -53,7 +59,13 @@ export default function TaskCard({ artisan, cta = 'Start Visit' }: { artisan: Ta
           </a>
         ) : null}
         {artisan.phone ? (
-          <a href={`https://wa.me/91${artisan.phone}`} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${artisan.full_name}`} className={iconBtn}>
+          <a
+            href={`https://wa.me/91${artisan.phone}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`WhatsApp ${artisan.full_name}`}
+            className={iconBtn}
+          >
             <MessageCircle className="h-[18px] w-[18px]" />
           </a>
         ) : null}
@@ -64,7 +76,7 @@ export default function TaskCard({ artisan, cta = 'Start Visit' }: { artisan: Ta
           aria-label="Open in maps"
           className={iconBtn}
         >
-          <Navigation className="h-[18px] w-[18px]" />
+          <Compass className="h-[18px] w-[18px]" />
         </a>
       </div>
     </Card>

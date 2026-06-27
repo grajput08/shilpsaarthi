@@ -14,7 +14,7 @@ const items = [
 export default function FieldNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md border-t border-slate-200/80 bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
+    <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md border-t border-field-border/80 bg-field-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
       {items.map((item) => {
         const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
         const Icon = item.icon;
@@ -25,13 +25,13 @@ export default function FieldNav() {
             aria-current={active ? 'page' : undefined}
             className={cn(
               'group relative flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 text-xs font-medium',
-              'transition-colors duration-150 active:bg-slate-50 motion-reduce:transition-none',
-              active ? 'text-brand-600' : 'text-slate-500 hover:text-slate-700',
+              'transition-colors duration-150 active:bg-stone-100/80 motion-reduce:transition-none',
+              active ? 'text-field-accent' : 'text-field-muted hover:text-field-ink',
             )}
           >
             <span
               className={cn(
-                'absolute top-0 h-0.5 w-8 rounded-full bg-brand-600 transition-all duration-200 ease-out',
+                'absolute top-0 h-0.5 w-8 rounded-full bg-field-accent transition-all duration-200 ease-out',
                 active ? 'opacity-100' : 'opacity-0',
               )}
             />
