@@ -18,7 +18,7 @@ const TABS: { key: string; label: string; statuses: ArtisanStatus[] }[] = [
 
 export default async function QueuePage({ searchParams }: { searchParams: { tab?: string } }) {
   const tab = TABS.find((t) => t.key === searchParams.tab) ?? TABS[0];
-  const supabase = createClient();
+  const supabase = createClient('admin');
   const { data } = await supabase
     .from('artisans')
     .select('id, artisan_code, full_name, village, district, primary_craft, status, priority, assigned_verifier, profiles:profiles!artisans_assigned_verifier_fkey(full_name)')

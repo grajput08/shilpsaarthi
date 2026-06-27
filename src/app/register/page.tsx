@@ -1,7 +1,16 @@
-import { redirect } from 'next/navigation';
+import RegistrationForm from '@/app/a/form/RegistrationForm';
 
-// Tokenless public registration is retired. Public sign-up now requires a link:
-// /a/form?id=<token>. Anything hitting /register goes to the CRM.
-export default function RegisterRedirect() {
-  redirect('/admin');
+export const metadata = { title: 'Artisan Registration · ShilpSaarthi' };
+export const dynamic = 'force-dynamic';
+
+export default function RegisterPage({
+  searchParams,
+}: Readonly<{
+  searchParams: { lang?: string };
+}>) {
+  return (
+    <main className="pwa mx-auto min-h-screen max-w-md bg-slate-50 px-4 py-6">
+      <RegistrationForm initialLanguage={searchParams.lang ?? 'en'} />
+    </main>
+  );
 }

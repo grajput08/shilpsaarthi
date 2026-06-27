@@ -1,4 +1,5 @@
 import { type Page, expect } from '@playwright/test';
+import type { AuthArea } from '../src/lib/auth/area';
 
 /** Deterministic seeded artisan ids. */
 export const SEED = {
@@ -28,9 +29,13 @@ export async function verifierLogin(page: Page) {
   await page.waitForURL('**/verifier');
 }
 
-export async function signOut(page: Page) {
-  await page.getByTestId('sign-out').first().click();
-  await page.waitForURL((u) => !u.pathname.startsWith('/admin') && !u.pathname.startsWith('/verifier/artisans'));
+export async function signOut(page: Page, portal: AuthArea) {
+  await page.getByTestId(`sign-out-${portal}`).click();
+  if (portal === 'admin') {
+    await page.waitForURL('**/login');
+  } else {
+    await page.waitForURL('**/verifier/login');
+  }
 }
 
 /** 1x1 transparent PNG for photo-upload tests. */

@@ -36,7 +36,7 @@ export async function submitVerification(payload: VerificationSubmitInput): Prom
     return { ok: false, error: 'Validation failed: ' + parsed.error.issues[0]?.message };
   }
   const input = parsed.data;
-  const supabase = createClient();
+  const supabase = createClient('verifier');
   const {
     data: { user },
   } = await supabase.auth.getUser();

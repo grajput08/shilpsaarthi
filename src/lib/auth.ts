@@ -2,12 +2,13 @@ import { redirect } from 'next/navigation';
 import { createClient } from './supabase/server';
 import type { Database } from './supabase/database.types';
 import type { AppRole } from './domain';
+import { areaFromRoles, type AuthArea } from './auth/area';
 
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 
-/** Current signed-in profile, or null. */
-export async function getProfile(): Promise<Profile | null> {
-  const supabase = createClient();
+/** Current signed-in profile for a portal, or null. */
+export async function getProfile(area: AuthArea): Promise<Profile | null> {
+  const supabase = createClient(area);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -18,11 +19,12 @@ export async function getProfile(): Promise<Profile | null> {
 
 /**
  * Require a signed-in profile with one of the allowed roles, else redirect.
- * Verifiers are sent to the field login; everyone else to the admin login.
+ * Uses the portal-specific session cookie inferred from the allowed roles.
  */
 export async function requireProfile(roles: AppRole[]): Promise<Profile> {
-  const profile = await getProfile();
-  const loginPath = roles.includes('verifier') && roles.length === 1 ? '/verifier/login' : '/login';
+  const area = areaFromRoles(roles);
+  const profile = await getProfile(area);
+  const loginPath = area === 'verifier' ? '/verifier/login' : '/login';
   if (!profile) redirect(loginPath);
   if (!roles.includes(profile.role)) {
     redirect(profile.role === 'verifier' ? '/verifier' : '/admin');

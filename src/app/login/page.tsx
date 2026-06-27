@@ -15,8 +15,8 @@ const VALUE_PROPS = [
 ];
 
 export default async function LoginPage() {
-  const profile = await getProfile();
-  if (profile) redirect(profile.role === 'verifier' ? '/verifier' : '/admin');
+  const profile = await getProfile('admin');
+  if (profile) redirect('/admin');
 
   return (
     <main className="min-h-screen bg-white lg:grid lg:grid-cols-[1.05fr_1fr]">

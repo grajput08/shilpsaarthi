@@ -13,8 +13,8 @@ interface AssignmentRow {
 }
 
 export default async function FieldHomePage() {
-  const profile = await getProfile();
-  const supabase = createClient();
+  const profile = await getProfile('verifier');
+  const supabase = createClient('verifier');
 
   const { data } = await supabase
     .from('assignments')

@@ -11,8 +11,8 @@ import {
 } from '@/lib/domain';
 
 export default async function AdminArtisanDetail({ params }: { params: { id: string } }) {
-  const supabase = createClient();
-  const profile = await getProfile();
+  const supabase = createClient('admin');
+  const profile = await getProfile('admin');
 
   const { data: artisan } = await supabase
     .from('artisans')

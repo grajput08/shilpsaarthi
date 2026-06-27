@@ -6,9 +6,8 @@ import { getProfile } from '@/lib/auth';
 export const metadata = { title: 'Field Login · ShilpSaarthi' };
 
 export default async function FieldLoginPage() {
-  const profile = await getProfile();
-  if (profile?.role === 'verifier') redirect('/verifier');
-  if (profile) redirect('/admin'); // CRM users belong in the CRM
+  const profile = await getProfile('verifier');
+  if (profile) redirect('/verifier');
 
   return (
     <main className="pwa flex min-h-screen flex-col justify-center bg-slate-100 px-4">

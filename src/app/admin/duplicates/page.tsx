@@ -14,7 +14,7 @@ interface Mini {
 }
 
 export default async function DuplicatesPage() {
-  const supabase = createClient();
+  const supabase = createClient('admin');
   const { data } = await supabase
     .from('duplicate_candidates')
     .select(

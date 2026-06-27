@@ -1,22 +1,23 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from './database.types';
+import { AREA_COOKIE_NAME, resolveAuthArea, type AuthArea } from '@/lib/auth/area';
 
-/** Refreshes the auth session cookie on every request (App Router middleware). */
-export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
-
+/** Refresh the auth session cookie for a single portal area. */
+async function refreshAreaSession(request: NextRequest, response: NextResponse, area: AuthArea) {
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: {
+        name: AREA_COOKIE_NAME[area],
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );
@@ -25,8 +26,17 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Touch the session so it refreshes if needed; result is intentionally unused.
   await supabase.auth.getUser();
+}
+
+/** Refreshes the portal-specific auth session cookie on each request. */
+export async function updateSession(request: NextRequest) {
+  const response = NextResponse.next({ request });
+  const area = resolveAuthArea(request.nextUrl.pathname);
+
+  if (area) {
+    await refreshAreaSession(request, response, area);
+  }
 
   return response;
 }

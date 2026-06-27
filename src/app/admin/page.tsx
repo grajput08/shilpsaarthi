@@ -36,7 +36,7 @@ type ArtisanRow = {
 };
 
 export default async function OverviewPage() {
-  const supabase = createClient();
+  const supabase = createClient('admin');
 
   const [{ data: artisans }, { data: idDocs }, { data: products }, { data: craftProfiles }, { data: duplicates }] =
     await Promise.all([

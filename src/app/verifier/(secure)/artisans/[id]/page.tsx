@@ -17,7 +17,7 @@ import { formatDate, formatFieldPhone, ageFromDob } from '@/lib/format';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 
 export default async function FieldArtisanPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+  const supabase = createClient('verifier');
   const { data: artisan } = await supabase
     .from('artisans')
     .select('*, craft_profiles(*), addresses(*), verifications(*), documents(*)')

@@ -4,8 +4,8 @@ import TasksList from './TasksList';
 import type { TaskArtisan } from '@/components/field/TaskCard';
 
 export default async function FieldTasksPage() {
-  const profile = await getProfile();
-  const supabase = createClient();
+  const profile = await getProfile('verifier');
+  const supabase = createClient('verifier');
   const { data } = await supabase
     .from('assignments')
     .select(

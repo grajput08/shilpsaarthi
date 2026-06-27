@@ -24,13 +24,12 @@ export async function fieldLogin(
     return { stage: 'verify', email, devCode };
   }
 
-  // verify stage
   const code = String(formData.get('code') ?? '').trim();
   if (!verifyOtp(email, code)) {
     return { stage: 'verify', email, error: 'Invalid or expired code. Try again.' };
   }
 
-  const supabase = createClient();
+  const supabase = createClient('verifier');
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password: process.env.DEMO_USER_PASSWORD ?? 'Password123!',
@@ -38,5 +37,20 @@ export async function fieldLogin(
   if (error) {
     return { stage: 'verify', email, error: 'Sign-in failed. Make sure this is a registered verifier email.' };
   }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user!.id)
+    .single();
+
+  if (profile?.role !== 'verifier') {
+    await supabase.auth.signOut();
+    return { stage: 'verify', email, error: 'Use the CRM login for admin and operator accounts.' };
+  }
+
   redirect('/verifier');
 }

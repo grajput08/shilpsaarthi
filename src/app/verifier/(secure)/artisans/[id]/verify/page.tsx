@@ -5,8 +5,8 @@ import VerifyFlow from './VerifyFlow';
 import type { CraftCategory } from '@/lib/domain';
 
 export default async function VerifyPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
-  const profile = await getProfile();
+  const supabase = createClient('verifier');
+  const profile = await getProfile('verifier');
   const { data: artisan } = await supabase
     .from('artisans')
     .select('id, full_name, phone, gender, tribe_community, state, district, block, village, primary_craft, status, craft_profiles(*), products(*), documents(doc_type, status, reference_masked)')

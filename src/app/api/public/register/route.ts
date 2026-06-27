@@ -33,21 +33,33 @@ export async function POST(request: Request) {
   const input = parsed.data;
   const admin = createAdminClient();
 
-  // A valid, active registration token is required for public submissions.
-  if (!input.token) {
-    return NextResponse.json({ error: 'A registration link token is required.' }, { status: 400 });
+  if (input.token) {
+    const { data: tokenRow } = await admin
+      .from('registration_tokens')
+      .select('token, status, expires_at')
+      .eq('token', input.token)
+      .maybeSingle();
+    if (!tokenRow || tokenRow.status !== 'active') {
+      return NextResponse.json({ error: 'This registration link is invalid or already used.' }, { status: 409 });
+    }
+    if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
+      return NextResponse.json({ error: 'This registration link has expired.' }, { status: 409 });
+    }
   }
-  const { data: tokenRow } = await admin
-    .from('registration_tokens')
-    .select('token, status, expires_at')
-    .eq('token', input.token)
+
+  const { data: existing } = await admin
+    .from('artisans')
+    .select('id')
+    .eq('phone', input.phone)
     .maybeSingle();
-  if (!tokenRow || tokenRow.status !== 'active') {
-    return NextResponse.json({ error: 'This registration link is invalid or already used.' }, { status: 409 });
+  if (existing) {
+    return NextResponse.json(
+      { error: 'This mobile number is already registered.' },
+      { status: 409 },
+    );
   }
-  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
-    return NextResponse.json({ error: 'This registration link has expired.' }, { status: 409 });
-  }
+
+  const registrationSource = input.token ? 'public_link' : 'whatsapp_self';
 
   const completeness = computeCompleteness({
     basicComplete: true,
@@ -70,7 +82,7 @@ export async function POST(request: Request) {
       tribe_community: input.tribe_community || null,
       primary_craft: input.primary_craft,
       status: 'registration_submitted',
-      registration_source: 'public_link',
+      registration_source: registrationSource,
       consent_status: 'granted',
       preferred_language: input.preferred_language,
       state: input.state,
@@ -126,11 +138,12 @@ export async function POST(request: Request) {
   // 4. transition to Pending Verification (records a status_changed audit via trigger)
   await admin.from('artisans').update({ status: 'pending_verification' }).eq('id', artisan.id);
 
-  // mark the registration token as used and link it to the new artisan
-  await admin
-    .from('registration_tokens')
-    .update({ status: 'used', used_at: new Date().toISOString(), artisan_id: artisan.id })
-    .eq('token', input.token);
+  if (input.token) {
+    await admin
+      .from('registration_tokens')
+      .update({ status: 'used', used_at: new Date().toISOString(), artisan_id: artisan.id })
+      .eq('token', input.token);
+  }
 
   // 5. mock WhatsApp confirmation
   const { data: template } = await admin
@@ -160,7 +173,7 @@ export async function POST(request: Request) {
     action: 'form_submitted',
     actorRole: 'public',
     source: 'public_registration',
-    newValue: { source: 'public_link', status: 'pending_verification' },
+    newValue: { source: registrationSource, status: 'pending_verification' },
   });
 
   return NextResponse.json({

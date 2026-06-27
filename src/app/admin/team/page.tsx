@@ -4,7 +4,7 @@ import { ROLE_LABEL } from '@/lib/domain';
 import { DASHBOARD_PAGE_TITLE } from '@/components/admin/dashboard-layout';
 
 export default async function TeamPage() {
-  const supabase = createClient();
+  const supabase = createClient('admin');
   const { data: verifiers } = await supabase
     .from('profiles')
     .select('id, full_name, phone, state, district, is_active, role')

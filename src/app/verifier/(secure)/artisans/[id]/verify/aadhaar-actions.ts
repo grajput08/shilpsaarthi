@@ -10,7 +10,7 @@ export async function requestAadhaarOtp(
   | { ok: true; devCode: string; masked: string; message: string }
   | { ok: false; error: string }
 > {
-  const supabase = createClient();
+  const supabase = createClient('verifier');
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -26,7 +26,7 @@ export async function confirmAadhaarOtp(
   aadhaar: string,
   code: string,
 ): Promise<{ ok: true; masked: string } | { ok: false; error: string }> {
-  const supabase = createClient();
+  const supabase = createClient('verifier');
   const {
     data: { user },
   } = await supabase.auth.getUser();

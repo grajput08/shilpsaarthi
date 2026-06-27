@@ -20,7 +20,7 @@ export default async function FieldLayout({ children }: { children: React.ReactN
         </div>
         <div className="flex items-center gap-2">
           <Chip tone="amber">{ROLE_LABEL[profile.role]}</Chip>
-          <SignOutButton compact />
+          <SignOutButton portal="verifier" compact />
         </div>
       </header>
       <main className="flex-1 px-4 py-5 pb-[calc(80px+env(safe-area-inset-bottom))]">{children}</main>

@@ -7,16 +7,17 @@ export interface LoginState {
   error?: string;
 }
 
+const CRM_ROLES = ['admin', 'operator', 'district_officer'] as const;
+
 export async function signIn(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
   if (!email || !password) return { error: 'Email and password are required.' };
 
-  const supabase = createClient();
+  const supabase = createClient('admin');
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: 'Invalid email or password.' };
 
-  // Route by role.
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -26,5 +27,10 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
     .eq('id', user!.id)
     .single();
 
-  redirect(profile?.role === 'verifier' ? '/verifier' : '/admin');
+  if (!profile || !CRM_ROLES.includes(profile.role as (typeof CRM_ROLES)[number])) {
+    await supabase.auth.signOut();
+    return { error: 'Use the field verifier login for verifier accounts.' };
+  }
+
+  redirect('/admin');
 }

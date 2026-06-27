@@ -25,10 +25,10 @@ export async function assignVerifier(formData: FormData): Promise<ActionResult> 
     | 'correction';
   if (!artisanId || !verifierId) return { ok: false, error: 'Artisan and verifier are required.' };
 
-  const profile = await getProfile();
+  const profile = await getProfile('admin');
   if (!profile) return { ok: false, error: 'Not signed in.' };
 
-  const supabase = createClient();
+  const supabase = createClient('admin');
 
   // Retire any existing active assignment, then create the new one.
   await supabase
@@ -76,10 +76,10 @@ export async function updateArtisanStatus(formData: FormData): Promise<ActionRes
   const reason = String(formData.get('reason') ?? '') || null;
   if (!artisanId || !status) return { ok: false, error: 'Missing fields.' };
 
-  const profile = await getProfile();
+  const profile = await getProfile('admin');
   if (!profile) return { ok: false, error: 'Not signed in.' };
 
-  const supabase = createClient();
+  const supabase = createClient('admin');
   const { error } = await supabase.from('artisans').update({ status }).eq('id', artisanId);
   if (error) return { ok: false, error: error.message };
 
@@ -107,10 +107,10 @@ export async function sendWhatsApp(formData: FormData): Promise<ActionResult> {
   const templateKey = String(formData.get('template_key') ?? '');
   if (!templateKey) return { ok: false, error: 'Choose a template.' };
 
-  const profile = await getProfile();
+  const profile = await getProfile('admin');
   if (!profile) return { ok: false, error: 'Not signed in.' };
 
-  const supabase = createClient();
+  const supabase = createClient('admin');
   const { data: template } = await supabase
     .from('whatsapp_templates')
     .select('*')
@@ -185,10 +185,10 @@ export async function resolveDuplicate(formData: FormData): Promise<ActionResult
   const masterArtisanId = String(formData.get('master_artisan_id') ?? '');
   if (!candidateId || !decision) return { ok: false, error: 'Missing fields.' };
 
-  const profile = await getProfile();
+  const profile = await getProfile('admin');
   if (!profile || profile.role !== 'admin') return { ok: false, error: 'Only admins can resolve duplicates.' };
 
-  const supabase = createClient();
+  const supabase = createClient('admin');
 
   if (decision === 'merge') {
     await supabase.from('artisans').update({ status: 'duplicate' }).eq('id', matchArtisanId);
@@ -229,10 +229,10 @@ export async function overrideVerification(formData: FormData): Promise<ActionRe
   const artisanId = String(formData.get('artisan_id') ?? '');
   if (!verificationId) return { ok: false, error: 'Missing verification id.' };
 
-  const profile = await getProfile();
+  const profile = await getProfile('admin');
   if (!profile || profile.role !== 'admin') return { ok: false, error: 'Only admins can override.' };
 
-  const supabase = createClient();
+  const supabase = createClient('admin');
   // admin_override must be set in the same row before/with the decision so the
   // enforcement trigger permits it.
   const { error } = await supabase

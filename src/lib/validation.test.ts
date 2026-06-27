@@ -17,6 +17,12 @@ describe('publicRegistrationSchema', () => {
     expect(publicRegistrationSchema.safeParse(base).success).toBe(true);
   });
 
+  it('accepts a valid payload without a registration token', () => {
+    const payload = { ...base };
+    expect('token' in payload).toBe(false);
+    expect(publicRegistrationSchema.safeParse(payload).success).toBe(true);
+  });
+
   it('rejects an invalid phone', () => {
     const r = publicRegistrationSchema.safeParse({ ...base, phone: '12345' });
     expect(r.success).toBe(false);

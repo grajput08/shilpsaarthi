@@ -1,5 +1,40 @@
 import { test, expect } from '@playwright/test';
-import { adminLogin, verifierLogin, signOut } from './helpers';
+import { adminLogin, verifierLogin } from './helpers';
+
+test.describe('open public registration at /register', () => {
+  test('needs no login, shows no CRM UI, and creates a Pending Verification record', async ({ page }) => {
+    const artisanName = 'Open Register Test Artisan';
+
+    await page.context().clearCookies();
+    await page.goto('/register');
+
+    expect(page.url()).toContain('/register');
+    await expect(page.getByTestId('reg-language')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('Artisan Registry');
+
+    await page.getByTestId('reg-next').click();
+    await page.getByTestId('reg-consent').check();
+    await page.getByTestId('reg-next').click();
+    await page.getByTestId('reg-name').fill(artisanName);
+    await page.getByTestId('reg-phone').fill('9876512399');
+    await page.getByTestId('reg-next').click();
+    await page.getByTestId('reg-state').fill('Madhya Pradesh');
+    await page.getByTestId('reg-district').fill('Dindori');
+    await page.getByTestId('reg-village').fill('Karanjia');
+    await page.getByTestId('reg-next').click();
+    await page.getByTestId('reg-craft').selectOption('pottery');
+    await page.getByTestId('reg-next').click();
+    await page.getByTestId('reg-next').click();
+    await page.getByTestId('reg-submit').click();
+    await expect(page.getByTestId('registration-success')).toBeVisible();
+
+    await adminLogin(page);
+    await page.goto('/admin/registry?status=pending_verification&q=Open+Register');
+    const table = page.getByTestId('registry-table');
+    await expect(table).toContainText(artisanName);
+    await expect(table).toContainText('WhatsApp Self-Registration');
+  });
+});
 
 // The full required journey runs as one ordered story (shared state between tests).
 test.describe.configure({ mode: 'serial' });
@@ -59,12 +94,16 @@ test('admin assigns the artisan to a verifier; verifier sees the task', async ({
   await page.getByTestId('assign-submit').click();
   await expect(page.getByTestId('action-msg')).toContainText(/assigned/i);
 
-  await signOut(page);
+  // Admin stays logged in — verifier uses a separate portal session.
   await verifierLogin(page);
   await page.goto('/verifier');
   await expect(page.locator('body')).toContainText(ARTISAN_NAME);
   // verifier app shows no CRM navigation
   await expect(page.locator('body')).not.toContainText('Artisan Registry');
+
+  // Admin session still active in parallel
+  await page.goto('/admin');
+  await expect(page.getByText('Programme Overview')).toBeVisible();
 });
 
 test('verifier edits a field, cancels an item, and Fully Verified is blocked without override', async ({ page }) => {

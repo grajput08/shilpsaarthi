@@ -34,7 +34,7 @@ const REGISTRY_COLUMNS =
   'id, artisan_code, full_name, phone, state, district, village, primary_craft, registration_source, status, data_completeness, duplicate_risk, updated_at';
 
 export default async function RegistryPage({ searchParams }: { searchParams: SearchParams }) {
-  const supabase = createClient();
+  const supabase = createClient('admin');
   const filters = searchParams;
 
   const buildQuery = () => {
