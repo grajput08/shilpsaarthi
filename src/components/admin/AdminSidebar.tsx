@@ -7,6 +7,7 @@ import { ROLE_LABEL } from '@/lib/domain';
 import type { Profile } from '@/lib/auth';
 import { Chip } from '@/components/ui';
 import AdminNav from '@/components/admin/AdminNav';
+import { AdiSetuLogo } from '@/components/brand/AdiSetuBrand';
 import SignOutButton from '@/components/SignOutButton';
 
 export default function AdminSidebar({ profile }: { profile: Profile }) {
@@ -21,9 +22,7 @@ export default function AdminSidebar({ profile }: { profile: Profile }) {
     >
       <div className={cn('flex items-center', collapsed ? 'flex-col gap-2' : 'justify-between px-2')}>
         <div className={cn('flex items-center gap-2', collapsed && 'justify-center')}>
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-            अ
-          </span>
+          <AdiSetuLogo className="h-8 w-8 shrink-0 text-brand-600" />
           {!collapsed ? (
             <div className="leading-tight">
               <p className="text-sm font-bold tracking-tight text-slate-900">Adi Setu</p>

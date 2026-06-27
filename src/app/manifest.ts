@@ -8,10 +8,11 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/verifier',
     display: 'standalone',
     background_color: '#f8fafc',
-    theme_color: '#a85b18',
+    theme_color: '#13448f',
     orientation: 'portrait',
     icons: [
       { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
     ],
   };
 }

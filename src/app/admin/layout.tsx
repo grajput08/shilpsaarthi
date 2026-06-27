@@ -1,6 +1,7 @@
 import { requireProfile } from '@/lib/auth';
 import AdminNav from '@/components/admin/AdminNav';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import { AdiSetuLogo } from '@/components/brand/AdiSetuBrand';
 import SignOutButton from '@/components/SignOutButton';
 
 // Authenticated dashboard: always render fresh, never cache data reads.
@@ -12,7 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const brand = (
     <div className="flex items-center gap-2">
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-sm font-bold text-white">अ</span>
+      <AdiSetuLogo className="h-8 w-8 shrink-0 text-brand-600" />
       <div className="leading-tight">
         <p className="text-sm font-bold tracking-tight text-slate-900">Adi Setu</p>
         <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">Admin CRM</p>

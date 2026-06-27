@@ -28,7 +28,7 @@ export default async function LoginPage() {
 
           {/* Adi Setu brand */}
           <div className="mt-5 flex flex-col items-center">
-            <AdiSetuLogo className="h-16 w-20" />
+            <AdiSetuLogo className="h-16 w-16" />
             <p className="mt-1 text-3xl font-extrabold">
               <span className="text-brand-600">Adi</span> <span className="text-brand-400">Setu</span>
             </p>

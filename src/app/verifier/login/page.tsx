@@ -1,9 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Shield } from 'lucide-react';
 import FieldLoginForm from './FieldLoginForm';
 import { getProfile } from '@/lib/auth';
-import { IllustrativeEmblem } from '@/components/brand/AdiSetuBrand';
+import { AdiSetuLogo, IllustrativeEmblem } from '@/components/brand/AdiSetuBrand';
 
 export const metadata = { title: 'Field Verifier · Adi Setu' };
 
@@ -43,7 +42,7 @@ export default async function FieldLoginPage() {
         {/* Brand header */}
         <header className="text-center">
           <div className="inline-flex items-center gap-2 text-field-accent">
-            <Shield className="h-5 w-5" strokeWidth={2.25} />
+            <AdiSetuLogo className="h-6 w-6 text-brand-600" />
             <span className="text-lg font-bold tracking-tight text-field-ink">Adi Setu</span>
           </div>
 

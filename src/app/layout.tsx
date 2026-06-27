@@ -6,13 +6,17 @@ export const metadata: Metadata = {
   description:
     'Identify, onboard, verify and manage tribal artisans — public registration, field verifier PWA, and admin CRM dashboard.',
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/icons/icon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/icons/icon.svg', type: 'image/svg+xml' }],
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#a85b18',
+  themeColor: '#13448f',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

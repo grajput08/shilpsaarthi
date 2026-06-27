@@ -1,33 +1,45 @@
 import * as React from 'react';
 
-import { BRAND_PRIMARY, BRAND_SHADES } from '@/lib/theme';
+import { BRAND_PRIMARY } from '@/lib/theme';
 
-/**
- * "Adi Setu" mark — two figures crossing a bridge under a rising sun.
- */
+/** Default ShilpSaarthi / Adi Setu mark — connected nodes forming a bridge. */
 export function AdiSetuLogo({ className }: { className?: string }) {
+  const stroke = className?.includes('text-') ? 'currentColor' : BRAND_PRIMARY;
+
   return (
-    <svg viewBox="0 0 120 96" className={className} role="img" aria-label="Adi Setu logo">
-      {/* rising sun / rays */}
-      <g stroke={BRAND_PRIMARY} strokeWidth="3.4" strokeLinecap="round">
-        <path d="M60 30 V18 M60 30 M44 34 L36 26 M76 34 L84 26 M40 44 H28 M80 44 H92 M50 31 L45 21 M70 31 L75 21" />
-      </g>
-      <circle cx="60" cy="40" r="9" fill={BRAND_PRIMARY} />
-      {/* two figures */}
-      <g fill={BRAND_PRIMARY}>
-        <circle cx="49" cy="40" r="4.2" />
-        <path d="M49 45 l-5 13 h10 z" />
-      </g>
-      <g fill={BRAND_SHADES[400]}>
-        <circle cx="71" cy="40" r="4.2" />
-        <path d="M71 45 l-5 13 h10 z" />
-      </g>
-      {/* bridge arch + deck */}
-      <path d="M16 84 Q60 52 104 84" fill="none" stroke={BRAND_SHADES[600]} strokeWidth="4" />
-      <path d="M14 70 H106" stroke={BRAND_SHADES[600]} strokeWidth="5" strokeLinecap="round" />
-      <g stroke={BRAND_SHADES[600]} strokeWidth="3">
-        <path d="M26 70 V82 M42 70 V80 M60 70 V78 M78 70 V80 M94 70 V82" />
-      </g>
+    <svg viewBox="0 0 24 24" fill="none" className={className} role="img" aria-label="ShilpSaarthi logo">
+      <path
+        d="M12 6C13.1046 6 14 5.10457 14 4C14 2.89543 13.1046 2 12 2C10.8954 2 10 2.89543 10 4C10 5.10457 10.8954 6 12 6Z"
+        stroke={stroke}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 12C7.10457 12 8 11.1046 8 10C8 8.89543 7.10457 8 6 8C4.89543 8 4 8.89543 4 10C4 11.1046 4.89543 12 6 12Z"
+        stroke={stroke}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18 12C19.1046 12 20 11.1046 20 10C20 8.89543 19.1046 8 18 8C16.8954 8 16 8.89543 16 10C16 11.1046 16.8954 12 18 12Z"
+        stroke={stroke}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 22C13.1046 22 14 21.1046 14 20C14 18.8954 13.1046 18 12 18C10.8954 18 10 18.8954 10 20C10 21.1046 10.8954 22 12 22Z"
+        stroke={stroke}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M12 6V18" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 12L12 15L18 12" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 15V18" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 10L12 6L18 10" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
