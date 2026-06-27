@@ -24,7 +24,13 @@ import ArtisanActions from '@/components/admin/ArtisanActions';
 import { type VItem } from '@/components/admin/VerificationItems';
 // import WhatsAppTimeline, { type TimelineMessage } from '@/components/admin/WhatsAppTimeline';
 import { type TimelineMessage } from '@/components/admin/WhatsAppTimeline';
+import DashboardImage from '@/components/admin/DashboardImage';
 import { composeProfileStory } from '@/lib/artisan-profile';
+import {
+  artisanAvatarFallback,
+  productImageFallback,
+  visitPhotoFallback,
+} from '@/lib/dashboard-images';
 import {
   CONSENT_STATUS,
   CRAFT_CATEGORY,
@@ -40,7 +46,7 @@ import {
   type RegistrationSource,
   type VerificationDecision,
 } from '@/lib/domain';
-import { ageFromDob, formatDate, formatDateTime, initials, maskPhone } from '@/lib/format';
+import { ageFromDob, formatDate, formatDateTime, maskPhone } from '@/lib/format';
 
 type TabId = 'profile' | 'products' | 'workspace' | 'documents' | 'verification';
 
@@ -169,11 +175,11 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
   const [tab, setTab] = useState<TabId>('profile');
   const { artisan, craft, address, products, documents, verifications } = data;
 
-  const craftLabel = artisan.primary_craft
-    ? CRAFT_CATEGORY[artisan.primary_craft as CraftCategory]
-    : craft?.craft_category
-      ? CRAFT_CATEGORY[craft.craft_category as CraftCategory]
-      : null;
+  const craftKey = artisan.primary_craft ?? craft?.craft_category ?? null;
+  const craftLabel = craftKey
+    ? CRAFT_CATEGORY[craftKey as CraftCategory]
+    : null;
+  const avatarFallback = artisanAvatarFallback(artisan.id);
   const locationLine = [artisan.village, artisan.district, artisan.state].filter(Boolean).join(', ');
   const locationShort = [artisan.village ?? artisan.district, artisan.state].filter(Boolean).join(', ');
   const languageLabel = LANGUAGE_LABEL[artisan.preferred_language] ?? artisan.preferred_language;
@@ -222,18 +228,12 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
         <CardBody className="p-0">
           <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex gap-4">
-              {data.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={data.avatarUrl}
-                  alt={artisan.full_name}
-                  className="h-20 w-20 shrink-0 rounded-full border-2 border-white object-cover shadow-md ring-2 ring-slate-100"
-                />
-              ) : (
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-400 text-2xl font-bold text-white shadow-md">
-                  {initials(artisan.full_name)}
-                </div>
-              )}
+              <DashboardImage
+                src={data.avatarUrl}
+                fallback={avatarFallback}
+                alt={artisan.full_name}
+                className="h-20 w-20 shrink-0 rounded-full border-2 border-white object-cover shadow-md ring-2 ring-slate-100"
+              />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-bold tracking-tight text-brand-900 sm:text-3xl">
@@ -342,18 +342,12 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
               <Card>
                 <CardBody>
                   <div className="flex items-start gap-3">
-                    {data.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={data.avatarUrl}
-                        alt=""
-                        className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-100"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
-                        {initials(artisan.full_name)}
-                      </div>
-                    )}
+                    <DashboardImage
+                      src={data.avatarUrl}
+                      fallback={avatarFallback}
+                      alt=""
+                      className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-100"
+                    />
                     <div>
                       <h2 className="text-lg font-bold text-brand-900">The story of {artisan.full_name.split(' ')[0]}</h2>
                       <Chip tone="brand" className="mt-1">
@@ -400,14 +394,12 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
                         key={p.id}
                         className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
                       >
-                        {p.photoUrls[0] ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.photoUrls[0]} alt={p.name} className="h-36 w-full object-cover" />
-                        ) : (
-                          <div className="flex h-36 items-center justify-center bg-slate-100 text-slate-400">
-                            <Package className="h-10 w-10" />
-                          </div>
-                        )}
+                        <DashboardImage
+                          src={p.photoUrls[0]}
+                          fallback={productImageFallback(craftKey, p.id)}
+                          alt={p.name}
+                          className="h-36 w-full object-cover"
+                        />
                         <div className="p-4">
                           <p className="font-semibold text-slate-900">{p.name}</p>
                           {p.description ? (
@@ -423,9 +415,14 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
                           ) : null}
                           {p.photoUrls.length > 1 ? (
                             <div className="mt-3 flex gap-1.5">
-                              {p.photoUrls.slice(1, 4).map((url) => (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img key={url} src={url} alt="" className="h-10 w-10 rounded object-cover ring-1 ring-slate-200" />
+                              {p.photoUrls.slice(1, 4).map((url, i) => (
+                                <DashboardImage
+                                  key={url}
+                                  src={url}
+                                  fallback={productImageFallback(craftKey, `${p.id}-${i + 1}`)}
+                                  alt=""
+                                  className="h-10 w-10 rounded object-cover ring-1 ring-slate-200"
+                                />
                               ))}
                             </div>
                           ) : null}
@@ -553,9 +550,14 @@ export default function ArtisanDetailView({ data }: { data: ArtisanDetailData })
                       {v.notes ? <p className="mt-2 text-sm text-slate-600 [text-wrap:pretty]">{v.notes}</p> : null}
                       {v.photoUrls.length > 0 ? (
                         <div className="mt-3 flex flex-wrap gap-2">
-                          {v.photoUrls.map((url) => (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img key={url} src={url} alt="Visit photo" className="h-16 w-16 rounded-lg object-cover ring-1 ring-slate-200" />
+                          {v.photoUrls.map((url, i) => (
+                            <DashboardImage
+                              key={url}
+                              src={url}
+                              fallback={visitPhotoFallback(craftKey, `${v.id}-${i}`)}
+                              alt="Visit photo"
+                              className="h-16 w-16 rounded-lg object-cover ring-1 ring-slate-200"
+                            />
                           ))}
                         </div>
                       ) : null}
