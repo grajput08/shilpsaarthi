@@ -5,31 +5,47 @@ export interface BarDatum {
   value: number;
 }
 
+const TONES = {
+  saffron: 'bg-brand-500',
+  green: 'bg-india-500',
+  slate: 'bg-slate-400',
+} as const;
+
 export default function BarList({
   title,
+  subtitle,
   data,
-  emptyLabel = 'No data',
+  tone = 'saffron',
+  max: maxItems = 6,
+  emptyLabel = 'No data yet',
 }: {
   title: string;
+  subtitle?: string;
   data: BarDatum[];
+  tone?: keyof typeof TONES;
+  max?: number;
   emptyLabel?: string;
 }) {
-  const max = Math.max(1, ...data.map((d) => d.value));
+  const rows = data.slice(0, maxItems);
+  const peak = Math.max(1, ...rows.map((d) => d.value));
   return (
     <Card>
-      <CardHeader title={title} />
-      <CardBody className="space-y-2">
-        {data.length === 0 ? (
-          <p className="text-sm text-slate-400">{emptyLabel}</p>
+      <CardHeader title={title} subtitle={subtitle} />
+      <CardBody className="space-y-2.5">
+        {rows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-slate-400">{emptyLabel}</p>
         ) : (
-          data.map((d) => (
+          rows.map((d) => (
             <div key={d.label} className="text-sm">
-              <div className="mb-0.5 flex justify-between">
-                <span className="text-slate-600">{d.label}</span>
-                <span className="font-medium text-slate-800">{d.value}</span>
+              <div className="mb-1 flex items-baseline justify-between gap-3">
+                <span className="truncate text-slate-600 [text-wrap:pretty]">{d.label}</span>
+                <span className="font-semibold tabular-nums text-slate-800">{d.value}</span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-brand-400" style={{ width: `${(d.value / max) * 100}%` }} />
+                <div
+                  className={`h-full rounded-full ${TONES[tone]}`}
+                  style={{ width: `${Math.max(3, (d.value / peak) * 100)}%` }}
+                />
               </div>
             </div>
           ))

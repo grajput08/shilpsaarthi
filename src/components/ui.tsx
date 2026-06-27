@@ -140,25 +140,42 @@ export const Button = React.forwardRef<
   );
 });
 
+const statAccents = {
+  saffron: 'bg-brand-50 text-brand-600',
+  green: 'bg-india-50 text-india-600',
+  slate: 'bg-slate-100 text-slate-500',
+  amber: 'bg-amber-50 text-amber-600',
+  red: 'bg-red-50 text-red-600',
+} as const;
+
 export function Stat({
   label,
   value,
   hint,
   tone,
+  icon,
+  accent = 'slate',
 }: {
   label: string;
   value: React.ReactNode;
   hint?: string;
   tone?: Tone;
+  icon?: React.ReactNode;
+  accent?: keyof typeof statAccents;
 }) {
   return (
-    <Card className="p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-slate-900">{value}</p>
+    <Card className="p-4 transition-shadow duration-150 hover:shadow-pop">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500 [text-wrap:balance]">{label}</p>
+        {icon ? (
+          <span className={cn('inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', statAccents[accent])}>
+            {icon}
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-2 text-[1.75rem] font-bold leading-none tabular-nums tracking-tight text-slate-900">{value}</p>
       {hint ? (
-        <p className="mt-1 text-xs text-slate-500">
-          {tone ? <Chip tone={tone}>{hint}</Chip> : hint}
-        </p>
+        <p className="mt-2 text-xs text-slate-500">{tone ? <Chip tone={tone}>{hint}</Chip> : hint}</p>
       ) : null}
     </Card>
   );

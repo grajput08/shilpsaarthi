@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { getProfile } from '@/lib/auth';
 import { signPaths } from '@/lib/storage';
 import { Card, CardHeader, CardBody, Chip, ProgressBar } from '@/components/ui';
-import { ArtisanStatusBadge, DecisionBadge, DocStatusBadge, WhatsappStatusBadge } from '@/components/badges';
+import { ArtisanStatusBadge, DecisionBadge, DocStatusBadge } from '@/components/badges';
 import ArtisanActions from '@/components/admin/ArtisanActions';
 import VerificationItems, { type VItem } from '@/components/admin/VerificationItems';
+import WhatsAppTimeline from '@/components/admin/WhatsAppTimeline';
 import {
   CRAFT_CATEGORY,
   CONSENT_STATUS,
@@ -237,28 +238,9 @@ export default async function AdminArtisanDetail({ params }: { params: { id: str
             canOverride={profile?.role === 'admin'}
           />
 
-          <Card data-testid="whatsapp-timeline">
-            <CardHeader title="WhatsApp timeline" />
-            <CardBody className="space-y-3">
-              {messages.length === 0 ? (
-                <p className="text-sm text-slate-400">No messages yet.</p>
-              ) : (
-                messages
-                  .slice()
-                  .sort((a, b) => (a.sent_at ?? '') < (b.sent_at ?? '') ? 1 : -1)
-                  .map((m) => (
-                    <div key={m.id} className="rounded-lg bg-slate-50 p-3 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-slate-500">{m.template_key ?? 'custom'}</span>
-                        <WhatsappStatusBadge status={m.status as WhatsappStatus} />
-                      </div>
-                      <p className="mt-1 text-slate-700">{m.body}</p>
-                      <p className="mt-1 text-xs text-slate-400">{formatDateTime(m.sent_at)}</p>
-                    </div>
-                  ))
-              )}
-            </CardBody>
-          </Card>
+          <WhatsAppTimeline
+            messages={messages.map((m) => ({ ...m, status: m.status as WhatsappStatus }))}
+          />
         </div>
       </div>
     </div>

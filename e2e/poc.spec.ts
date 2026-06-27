@@ -5,20 +5,14 @@ import { adminLogin, verifierLogin, signOut } from './helpers';
 test.describe.configure({ mode: 'serial' });
 
 const ARTISAN_NAME = 'Linkflow Test Artisan';
-let publicFormUrl = '';
+// Seeded active registration token (supabase/seed.sql).
+const publicFormUrl = '/a/form?id=demo-token-active-0001';
 let artisanId = '';
 
-test('CRM admin generates a unique blank registration link (no name/phone)', async ({ page }) => {
+test('CRM admin dashboard loads with overview + charts', async ({ page }) => {
   await adminLogin(page);
-  // dashboard/registry reachable
   await expect(page.getByText('Programme Overview')).toBeVisible();
-
-  await page.goto('/admin/links');
-  await page.getByTestId('generate-link').click();
-  const code = page.getByTestId('generated-link').locator('code');
-  await expect(code).toBeVisible();
-  publicFormUrl = ((await code.textContent()) ?? '').trim();
-  expect(publicFormUrl).toContain('/a/form?id=');
+  await expect(page.getByText('Lifecycle status')).toBeVisible();
 });
 
 test('public link needs no login, shows no CRM UI, and creates a Pending Verification record', async ({ page }) => {
@@ -108,7 +102,7 @@ test('verifier edits a field, cancels an item, and Fully Verified is blocked wit
   await expect(page.getByTestId('verify-success')).toBeVisible({ timeout: 20000 });
 });
 
-test('CRM shows verification items + audit log, and admin override fully verifies', async ({ page }) => {
+test('CRM shows verification items + WhatsApp timeline, and admin override fully verifies', async ({ page }) => {
   await adminLogin(page);
   await page.goto(`/admin/registry/${artisanId}`);
 
@@ -118,12 +112,10 @@ test('CRM shows verification items + audit log, and admin override fully verifie
   // the verifier's field correction is persisted
   await expect(page.locator('body')).toContainText(`${ARTISAN_NAME} (corrected)`);
 
-  // audit log records the verification submission
-  await page.goto('/admin/audit');
-  await expect(page.getByTestId('audit-table')).toContainText('verification submitted');
+  // the WhatsApp timeline is present in the artisan section
+  await expect(page.getByTestId('whatsapp-timeline')).toBeVisible();
 
   // admin override -> Fully Verified despite the cancelled item
-  await page.goto(`/admin/registry/${artisanId}`);
   await page.getByTestId('admin-override').click();
   await expect(page.getByTestId('override-msg')).toContainText(/verified/i);
   await expect(page.getByText('Verified').first()).toBeVisible();

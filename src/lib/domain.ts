@@ -136,6 +136,17 @@ export const WHATSAPP_STATUS: Record<WhatsappStatus, { label: string; tone: Chip
   replied: { label: 'Replied', tone: 'purple' },
 };
 
+export const WHATSAPP_TEMPLATE_LABEL: Record<string, string> = {
+  registration_invite: 'Registration invitation',
+  consent_notice: 'Consent & information notice',
+  registration_confirmation: 'Registration confirmation',
+  visit_reminder: 'Verification visit reminder',
+  missing_document: 'Missing document reminder',
+  correction_request: 'Correction request',
+  verified_confirmation: 'Verified confirmation',
+  scheme_update: 'Scheme / exhibition update',
+};
+
 export const LANGUAGES: { code: string; label: string; native: string }[] = [
   { code: 'en', label: 'English', native: 'English' },
   { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
