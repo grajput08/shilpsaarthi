@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustrative tribal festival scene in Warli art style">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff8a3d"/>
+      <stop offset="0.45" stop-color="#e85d1a"/>
+      <stop offset="0.8" stop-color="#9c3d16"/>
+      <stop offset="1" stop-color="#5d2812"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff3da"/>
+      <stop offset="0.7" stop-color="#ffd79a"/>
+      <stop offset="1" stop-color="#ffd79a" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Warli dancer: hourglass body, round head, raised arms, dancing legs -->
+    <symbol id="dancer" viewBox="-20 -44 40 80">
+      <circle cx="0" cy="-34" r="5.2" fill="#fff"/>
+      <path d="M0 -28 L-8 -14 L8 -14 Z" fill="#fff"/>
+      <path d="M0 -14 L-8 0 L8 0 Z" fill="#fff"/>
+      <path d="M0 -22 L-13 -31 M0 -22 L13 -31" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+      <path d="M0 0 L-9 18 M0 0 L9 18" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="drummer" viewBox="-22 -44 44 80">
+      <circle cx="0" cy="-34" r="5.2" fill="#fff"/>
+      <path d="M0 -28 L-8 -12 L8 -12 Z" fill="#fff"/>
+      <path d="M0 -12 L-7 6 L7 6 Z" fill="#fff"/>
+      <path d="M0 0 L-9 18 M0 0 L9 18" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+      <ellipse cx="13" cy="-6" rx="7" ry="9" fill="none" stroke="#fff" stroke-width="2.4"/>
+      <path d="M-6 -20 L8 -12 M-6 -16 L8 -2" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+    </symbol>
+  </defs>
+
+  <rect width="900" height="1300" fill="url(#sky)"/>
+
+  <!-- sun + rays -->
+  <g>
+    <circle cx="450" cy="250" r="240" fill="url(#sun)"/>
+    <circle cx="450" cy="250" r="78" fill="#fff6e6"/>
+    <g stroke="#fff6e6" stroke-width="5" stroke-linecap="round" opacity="0.85">
+      <path d="M450 120 V70 M450 380 V430 M320 250 H270 M580 250 H630"/>
+      <path d="M360 160 L325 125 M540 160 L575 125 M360 340 L325 375 M540 340 L575 375"/>
+    </g>
+  </g>
+
+  <!-- distant hills -->
+  <path d="M0 560 Q220 470 450 540 T900 520 V1300 H0 Z" fill="#7a3014" opacity="0.55"/>
+  <path d="M0 660 Q260 580 520 650 T900 630 V1300 H0 Z" fill="#5d2410" opacity="0.6"/>
+
+  <!-- tree of life (Warli) -->
+  <g stroke="#fff" stroke-width="3" fill="none" opacity="0.9" transform="translate(120 560)">
+    <path d="M0 200 V40"/>
+    <path d="M0 150 L-34 110 M0 150 L34 110 M0 110 L-28 78 M0 110 L28 78 M0 70 L-22 46 M0 70 L22 46 M0 40 L-14 22 M0 40 L14 22"/>
+    <circle cx="0" cy="30" r="6" fill="#fff"/>
+    <circle cx="-20" cy="44" r="4" fill="#fff"/><circle cx="20" cy="44" r="4" fill="#fff"/>
+  </g>
+
+  <!-- the tarpa dance: a ring of dancers -->
+  <g transform="translate(560 720)">
+    <use href="#dancer" x="0"   y="-150" width="40" height="80"/>
+    <use href="#dancer" x="120" y="-110" width="40" height="80"/>
+    <use href="#dancer" x="165" y="10"   width="40" height="80"/>
+    <use href="#dancer" x="120" y="130"  width="40" height="80"/>
+    <use href="#dancer" x="0"   y="170"  width="40" height="80"/>
+    <use href="#dancer" x="-120" y="130" width="40" height="80"/>
+    <use href="#dancer" x="-165" y="10"  width="40" height="80"/>
+    <use href="#dancer" x="-120" y="-110" width="40" height="80"/>
+    <use href="#drummer" x="-12" y="-10" width="44" height="80"/>
+  </g>
+
+  <!-- foreground musicians + dancers -->
+  <g transform="translate(0 1180)">
+    <use href="#drummer" x="170" y="-60" width="60" height="110"/>
+    <use href="#dancer"  x="300" y="-70" width="58" height="112"/>
+    <use href="#dancer"  x="420" y="-58" width="58" height="112"/>
+    <use href="#drummer" x="560" y="-66" width="60" height="110"/>
+    <use href="#dancer"  x="690" y="-72" width="58" height="112"/>
+  </g>
+
+  <!-- Warli motif border -->
+  <g stroke="#ffe9cf" stroke-width="2" opacity="0.5" fill="none">
+    <path d="M0 1255 H900"/>
+    <path d="M20 1255 l12 -18 l12 18 M60 1255 l12 -18 l12 18 M100 1255 l12 -18 l12 18 M140 1255 l12 -18 l12 18 M180 1255 l12 -18 l12 18 M220 1255 l12 -18 l12 18 M260 1255 l12 -18 l12 18 M300 1255 l12 -18 l12 18 M340 1255 l12 -18 l12 18 M380 1255 l12 -18 l12 18 M420 1255 l12 -18 l12 18 M460 1255 l12 -18 l12 18 M500 1255 l12 -18 l12 18 M540 1255 l12 -18 l12 18 M580 1255 l12 -18 l12 18 M620 1255 l12 -18 l12 18 M660 1255 l12 -18 l12 18 M700 1255 l12 -18 l12 18 M740 1255 l12 -18 l12 18 M780 1255 l12 -18 l12 18 M820 1255 l12 -18 l12 18 M860 1255 l12 -18 l12 18"/>
+  </g>
+</svg>
