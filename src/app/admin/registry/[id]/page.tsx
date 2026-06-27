@@ -91,7 +91,7 @@ export default async function AdminArtisanDetail({ params }: { params: { id: str
         <div className="w-48">
           <p className="text-xs text-slate-500">Data completeness</p>
           <div className="mt-1 flex items-center gap-2">
-            <ProgressBar value={artisan.data_completeness} />
+            <ProgressBar value={artisan.data_completeness} meter />
             <span className="text-sm font-medium text-slate-700">{artisan.data_completeness}%</span>
           </div>
         </div>

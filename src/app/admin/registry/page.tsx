@@ -126,7 +126,7 @@ export default async function RegistryPage({ searchParams }: { searchParams: Sea
                     <td className="px-3 py-2"><ArtisanStatusBadge status={a.status} /></td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <ProgressBar value={a.data_completeness} className="w-16" />
+                        <ProgressBar value={a.data_completeness} className="w-16" meter />
                         <span className="text-xs text-slate-500">{a.data_completeness}%</span>
                       </div>
                     </td>
