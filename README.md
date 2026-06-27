@@ -4,6 +4,33 @@
 
 **Live demo:** https://shilpsaarthi.vercel.app · **Repo:** https://github.com/grajput08/shilpsaarthi
 
+## Demo login
+
+All seeded demo users are in `supabase/seed.sql`. CRM roles sign in with **email +
+password**; field verifiers sign in with **email + OTP** (mocked — no SMS is sent).
+
+**Shared CRM password:** `Password123!` (local and production via `DEMO_USER_PASSWORD`)
+
+### CRM / admin (email + password)
+
+| Role | Email | Password | Local login | Production login |
+|------|-------|----------|-------------|------------------|
+| Admin | `admin@shilpsaarthi.test` | `Password123!` | http://localhost:3000/login | https://shilpsaarthi.vercel.app/login |
+| Operator | `operator@shilpsaarthi.test` | `Password123!` | http://localhost:3000/login | https://shilpsaarthi.vercel.app/login |
+| District Officer | `officer@shilpsaarthi.test` | `Password123!` | http://localhost:3000/login | https://shilpsaarthi.vercel.app/login |
+
+After sign-in, CRM users land on `/admin` (registry, dashboard, field team, duplicates).
+
+### Field verifier (email + OTP)
+
+| Role | Email | OTP code | Local login | Production login |
+|------|-------|----------|-------------|------------------|
+| Field Verifier | `verifier@shilpsaarthi.test` | `123456` | http://localhost:3000/verifier/login | https://shilpsaarthi.vercel.app/verifier/login |
+| Field Verifier 2 | `verifier2@shilpsaarthi.test` | `123456` | http://localhost:3000/verifier/login | https://shilpsaarthi.vercel.app/verifier/login |
+
+Verifier flow: open the login URL → enter email → **Send code** → enter OTP **`123456`**
+(the demo also displays the code on screen). After sign-in, verifiers land on `/verifier`.
+
 Identify, onboard, verify and manage tribal artisans — a verified registry with
 photos, craft details, location, documents, products and verification status.
 
@@ -31,14 +58,7 @@ supabase db reset          # migrations + demo seed
 pnpm dev                   # http://localhost:3000
 ```
 
-Demo users share password `Password123!`; field verifiers use mock OTP `123456`.
-
-| Role | Email | Entry |
-|------|-------|-------|
-| Admin | `admin@shilpsaarthi.test` | `/login` |
-| Operator | `operator@shilpsaarthi.test` | `/login` |
-| District Officer | `officer@shilpsaarthi.test` | `/login` |
-| Field Verifier | `verifier@shilpsaarthi.test` | `/verifier/login` |
+See [Demo login](#demo-login) above for URLs, emails, passwords, and verifier OTP.
 
 ## Verify
 
