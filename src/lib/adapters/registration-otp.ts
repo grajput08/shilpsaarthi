@@ -44,3 +44,24 @@ export function isRegistrationPhoneVerified(phone: string): boolean {
 export function clearRegistrationPhoneVerification(phone: string): void {
   verifiedPhones.delete(normalizePhone(phone));
 }
+
+/** Accept in-session verification or a fresh OTP code (stateless, serverless-safe). */
+export function assertRegistrationPhoneVerified(
+  phone: string,
+  otpCode?: string,
+): { ok: true } | { ok: false; error: string } {
+  const normalized = normalizePhone(phone);
+  if (!PHONE_REGEX.test(normalized)) {
+    return { ok: false, error: 'Enter a valid 10-digit mobile number.' };
+  }
+  if (otpCode?.trim() && verifyOtp(otpKey(normalized), otpCode)) {
+    return { ok: true };
+  }
+  if (isRegistrationPhoneVerified(normalized)) {
+    return { ok: true };
+  }
+  return {
+    ok: false,
+    error: 'Mobile number is not verified. Send OTP to /api/public/register/otp, then include otp_code.',
+  };
+}

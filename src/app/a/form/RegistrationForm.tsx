@@ -98,6 +98,7 @@ export default function RegistrationForm({
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ artisanCode: string | null } | null>(null);
   const [phoneVerified, setPhoneVerified] = useState(false);
+  const [verifiedOtpCode, setVerifiedOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpDevCode, setOtpDevCode] = useState<string | null>(null);
@@ -149,6 +150,7 @@ export default function RegistrationForm({
 
   function resetPhoneVerification() {
     setPhoneVerified(false);
+    setVerifiedOtpCode('');
     setOtpSent(false);
     setOtpCode('');
     setOtpDevCode(null);
@@ -207,6 +209,7 @@ export default function RegistrationForm({
         return;
       }
       setPhoneVerified(true);
+      setVerifiedOtpCode(code);
       setOtpError(null);
     } catch {
       setOtpError('Network error. Please try again.');
@@ -316,6 +319,7 @@ export default function RegistrationForm({
         body: JSON.stringify({
           ...form,
           token,
+          otp_code: verifiedOtpCode || undefined,
           gender: form.gender || undefined,
           primary_craft: form.primary_craft,
           consent: form.consent,

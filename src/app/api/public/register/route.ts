@@ -1,12 +1,35 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { isRegistrationPhoneVerified, clearRegistrationPhoneVerification } from '@/lib/adapters/registration-otp';
+import { assertRegistrationPhoneVerified, clearRegistrationPhoneVerification } from '@/lib/adapters/registration-otp';
 import { publicRegistrationSchema } from '@/lib/validation';
 import { sendWhatsappMessage, renderTemplate } from '@/lib/adapters/whatsapp';
 import { logAudit } from '@/lib/audit';
 import { computeCompleteness } from '@/lib/format';
 
 export const runtime = 'nodejs';
+
+export async function GET() {
+  return NextResponse.json({
+    endpoint: 'POST /api/public/register',
+    description: 'Public artisan self-registration (no auth).',
+    otp: {
+      send: 'POST /api/public/register/otp { "action": "send", "phone": "9876543210" }',
+      verify: 'POST /api/public/register/otp { "action": "verify", "phone": "9876543210", "code": "123456" }',
+      demo_code: process.env.MOCK_OTP_CODE ?? '123456',
+    },
+    required_fields: [
+      'consent (true)',
+      'full_name',
+      'phone',
+      'otp_code (demo OTP, or verify via /otp first)',
+      'state',
+      'district',
+      'village',
+      'primary_craft',
+    ],
+    optional_fields: ['token', 'preferred_language', 'gender', 'tribe_community', 'block', 'product_name', 'product_description', 'photo_paths'],
+  });
+}
 
 function decodeDataUrl(dataUrl: string): { buffer: Buffer; contentType: string; ext: string } | null {
   const match = /^data:(.+?);base64,(.*)$/s.exec(dataUrl);
@@ -60,11 +83,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!isRegistrationPhoneVerified(input.phone)) {
-    return NextResponse.json(
-      { error: 'Mobile number is not verified. Please complete OTP verification.' },
-      { status: 403 },
-    );
+  const phoneCheck = assertRegistrationPhoneVerified(input.phone, input.otp_code);
+  if (!phoneCheck.ok) {
+    return NextResponse.json({ error: phoneCheck.error }, { status: 403 });
   }
 
   const registrationSource = input.token ? 'public_link' : 'whatsapp_self';

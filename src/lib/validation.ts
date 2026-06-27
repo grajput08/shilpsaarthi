@@ -26,6 +26,8 @@ export const publicRegistrationSchema = z.object({
   }),
   full_name: z.string().trim().min(2, 'Please enter the full name').max(120),
   phone: z.string().regex(PHONE_REGEX, 'Enter a valid 10-digit mobile number'),
+  /** Demo OTP from /api/public/register/otp — required unless verified in the same session. */
+  otp_code: z.string().trim().min(4).max(8).optional(),
   gender: genderEnum.optional(),
   tribe_community: z.string().trim().max(80).optional().or(z.literal('')),
   state: z.string().trim().min(2, 'State is required').max(80),
