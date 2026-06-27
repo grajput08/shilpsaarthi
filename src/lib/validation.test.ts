@@ -61,4 +61,25 @@ describe('verificationSubmitSchema', () => {
     const r = verificationSubmitSchema.safeParse({ ...base, decision: 'maybe' });
     expect(r.success).toBe(false);
   });
+
+  it('accepts per-item statuses and field edits', () => {
+    const r = verificationSubmitSchema.safeParse({
+      ...base,
+      fields: { full_name: 'Corrected Name', primary_craft: 'pottery' },
+      items: [
+        { item_key: 'identity', item_label: 'Identity', status: 'verified' },
+        { item_key: 'address', item_label: 'Address & GPS', status: 'cancelled', note: 'wrong gps' },
+      ],
+    });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.items).toHaveLength(2);
+  });
+
+  it('rejects an invalid item status', () => {
+    const r = verificationSubmitSchema.safeParse({
+      ...base,
+      items: [{ item_key: 'identity', item_label: 'Identity', status: 'maybe' }],
+    });
+    expect(r.success).toBe(false);
+  });
 });

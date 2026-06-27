@@ -40,3 +40,5 @@ supabase/.env
 
 # scratch
 *.local.log
+.vercel
+.env*

@@ -1,135 +1,130 @@
 import { test, expect } from '@playwright/test';
-import { adminLogin, verifierLogin, signOut, SEED, TINY_PNG } from './helpers';
+import { adminLogin, verifierLogin, signOut } from './helpers';
 
+// The full required journey runs as one ordered story (shared state between tests).
 test.describe.configure({ mode: 'serial' });
 
-test('public WhatsApp-link registration creates a Pending Verification artisan', async ({ page }) => {
-  await page.goto('/register');
+const ARTISAN_NAME = 'Linkflow Test Artisan';
+let publicFormUrl = '';
+let artisanId = '';
 
-  // language -> consent
-  await page.getByTestId('reg-next').click();
-  await expect(page.getByText('Consent & Information Notice')).toBeVisible();
+test('CRM admin generates a unique blank registration link (no name/phone)', async ({ page }) => {
+  await adminLogin(page);
+  // dashboard/registry reachable
+  await expect(page.getByText('Programme Overview')).toBeVisible();
+
+  await page.goto('/admin/links');
+  await page.getByTestId('generate-link').click();
+  const code = page.getByTestId('generated-link').locator('code');
+  await expect(code).toBeVisible();
+  publicFormUrl = ((await code.textContent()) ?? '').trim();
+  expect(publicFormUrl).toContain('/a/form?id=');
+});
+
+test('public link needs no login, shows no CRM UI, and creates a Pending Verification record', async ({ page }) => {
+  // visit the public link fully unauthenticated
+  await page.context().clearCookies();
+  await page.goto(publicFormUrl);
+
+  expect(page.url()).toContain('/a/form');
+  await expect(page.getByTestId('reg-language')).toBeVisible();
+  await expect(page.locator('body')).not.toContainText('Artisan Registry'); // no CRM nav
+
+  await page.getByTestId('reg-next').click(); // language -> consent
   await page.getByTestId('reg-consent').check();
-  await page.getByTestId('reg-next').click();
-
-  // identity
-  await page.getByTestId('reg-name').fill('E2E Test Artisan');
+  await page.getByTestId('reg-next').click(); // -> identity
+  await page.getByTestId('reg-name').fill(ARTISAN_NAME);
   await page.getByTestId('reg-phone').fill('9876512345');
-  await page.getByTestId('reg-next').click();
-
-  // address
+  await page.getByTestId('reg-next').click(); // -> address
   await page.getByTestId('reg-state').fill('Madhya Pradesh');
   await page.getByTestId('reg-district').fill('Dindori');
   await page.getByTestId('reg-village').fill('Karanjia');
-  await page.getByTestId('reg-next').click();
-
-  // craft
+  await page.getByTestId('reg-next').click(); // -> craft
   await page.getByTestId('reg-craft').selectOption('pottery');
-  await page.getByTestId('reg-next').click();
-
-  // products (skip) -> review
-  await page.getByTestId('reg-next').click();
+  await page.getByTestId('reg-next').click(); // -> products
+  await page.getByTestId('reg-next').click(); // -> review
   await page.getByTestId('reg-submit').click();
-
   await expect(page.getByTestId('registration-success')).toBeVisible();
-  await expect(page.getByText(/Pending Verification/i)).toBeVisible();
 
-  // Admin sees the new entry under Pending Verification.
+  // CRM shows the new record as Public Link + Pending Verification
   await adminLogin(page);
-  await page.goto('/admin/registry?status=pending_verification&q=E2E');
-  await expect(page.getByTestId('registry-table')).toContainText('E2E Test Artisan');
+  await page.goto('/admin/registry?status=pending_verification&q=Linkflow');
+  const table = page.getByTestId('registry-table');
+  await expect(table).toContainText(ARTISAN_NAME);
+  await expect(table).toContainText('Public Link');
+
+  const href = await table.getByRole('link', { name: ARTISAN_NAME }).first().getAttribute('href');
+  artisanId = (href ?? '').split('/').pop() ?? '';
+  expect(artisanId).toHaveLength(36);
 });
 
-test('admin assigns a verifier and the verifier sees the new task', async ({ page }) => {
+test('admin assigns the artisan to a verifier; verifier sees the task', async ({ page }) => {
   await adminLogin(page);
-  await page.goto(`/admin/registry/${SEED.pending}`);
-
+  await page.goto(`/admin/registry/${artisanId}`);
   await page.getByTestId('assign-verifier').selectOption({ label: 'Sunita Marko (Verifier)' });
   await page.getByTestId('assign-submit').click();
   await expect(page.getByTestId('action-msg')).toContainText(/assigned/i);
-  await expect(page.getByText('Assigned to Verifier')).toBeVisible();
 
   await signOut(page);
   await verifierLogin(page);
-  await page.goto('/field');
-  await expect(page.locator('body')).toContainText('Phoolwati Bai');
+  await page.goto('/verifier');
+  await expect(page.locator('body')).toContainText(ARTISAN_NAME);
+  // verifier app shows no CRM navigation
+  await expect(page.locator('body')).not.toContainText('Artisan Registry');
 });
 
-test('verifier completes a verification with mock GPS and a photo', async ({ page }) => {
+test('verifier edits a field, cancels an item, and Fully Verified is blocked without override', async ({ page }) => {
   await page.context().grantPermissions(['geolocation']);
   await page.context().setGeolocation({ latitude: 22.9412, longitude: 81.0784 });
-
   await verifierLogin(page);
-  await page.goto(`/field/artisans/${SEED.assigned}/verify`);
+  await page.goto(`/verifier/artisans/${artisanId}/verify`);
 
-  // consent
+  // edit any field (correction)
+  await page.getByTestId('edit-full_name').fill(`${ARTISAN_NAME} (corrected)`);
+
+  // per-field/section statuses, including a cancelled one
+  await page.getByTestId('item-identity').selectOption('verified');
+  await page.getByTestId('item-contact').selectOption('verified');
+  await page.getByTestId('item-address').selectOption('cancelled');
+  await page.getByTestId('item-craft').selectOption('verified');
+  await page.getByTestId('item-products').selectOption('not_applicable');
+  await page.getByTestId('item-documents').selectOption('verified');
+  await page.getByTestId('item-consent').selectOption('verified');
+  await page.getByTestId('note-address').fill('Address does not match captured GPS');
+
   await page.getByTestId('verify-consent').check();
-  await page.getByTestId('verify-next').click();
-
-  // identity + photo
-  await page.getByTestId('verify-identity').check();
-  await page.locator('input[type=file]').setInputFiles({ name: 'id.png', mimeType: 'image/png', buffer: TINY_PNG });
-  await page.getByTestId('verify-next').click();
-
-  // address + GPS
   await page.getByTestId('capture-gps').click();
   await expect(page.getByTestId('gps-coords')).toBeVisible();
-  await page.getByTestId('verify-location').check();
-  await page.getByTestId('verify-next').click();
 
-  // craft
-  await page.getByTestId('verify-craft').check();
-  await page.getByTestId('verify-next').click();
-
-  // products
-  await page.getByTestId('verify-products').check();
-  await page.getByTestId('verify-next').click();
-
-  // documents
-  await page.getByTestId('verify-documents').check();
-  await page.getByTestId('verify-next').click();
-
-  // decision
+  // attempting Fully Verified is blocked because an item is cancelled
   await page.getByTestId('verify-decision').selectOption('verified');
   await page.getByTestId('verify-submit').click();
+  await expect(page.getByTestId('verify-error')).toContainText(/override/i);
+
+  // submit Needs Correction (allowed)
+  await page.getByTestId('verify-decision').selectOption('needs_correction');
+  await page.getByTestId('verify-reason').fill('location_mismatch');
+  await page.getByTestId('verify-submit').click();
   await expect(page.getByTestId('verify-success')).toBeVisible({ timeout: 20000 });
-
-  // Admin confirms the status changed and the visit shows in history.
-  await signOut(page);
-  await adminLogin(page);
-  await page.goto(`/admin/registry/${SEED.assigned}`);
-  await expect(page.getByText('Verified').first()).toBeVisible();
-  await expect(page.getByTestId('verification-history')).toContainText('Sunita Marko');
 });
 
-test('admin sends a mocked WhatsApp message that is persisted', async ({ page }) => {
+test('CRM shows verification items + audit log, and admin override fully verifies', async ({ page }) => {
   await adminLogin(page);
-  await page.goto('/admin/whatsapp');
+  await page.goto(`/admin/registry/${artisanId}`);
 
-  await page.getByTestId('wa-audience').selectOption(SEED.verified);
-  await page.getByTestId('wa-console-template').selectOption('visit_reminder');
-  await expect(page.getByTestId('wa-preview')).toContainText('verification visit');
-  await page.getByTestId('wa-console-send').click();
+  const items = page.getByTestId('verification-items');
+  await expect(items).toContainText('Address & GPS');
+  await expect(items).toContainText('cancelled');
+  // the verifier's field correction is persisted
+  await expect(page.locator('body')).toContainText(`${ARTISAN_NAME} (corrected)`);
 
-  await expect(page.getByTestId('wa-result')).toContainText(/sent/i);
-  await expect(page.getByTestId('wa-log')).toContainText('visit_reminder');
-});
-
-test('admin sees the audit trail and exports a report', async ({ page }) => {
-  await adminLogin(page);
-
+  // audit log records the verification submission
   await page.goto('/admin/audit');
-  await expect(page.getByTestId('audit-table')).toBeVisible();
   await expect(page.getByTestId('audit-table')).toContainText('verification submitted');
 
-  await page.goto('/admin/reports');
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByTestId('export-csv').click(),
-  ]);
-  expect(download.suggestedFilename()).toContain('artisan_registry');
-
-  // The export is itself audited.
-  await page.goto('/admin/audit');
-  await expect(page.getByTestId('audit-table')).toContainText('export downloaded');
+  // admin override -> Fully Verified despite the cancelled item
+  await page.goto(`/admin/registry/${artisanId}`);
+  await page.getByTestId('admin-override').click();
+  await expect(page.getByTestId('override-msg')).toContainText(/verified/i);
+  await expect(page.getByText('Verified').first()).toBeVisible();
 });

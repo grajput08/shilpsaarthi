@@ -22,10 +22,10 @@ export async function getProfile(): Promise<Profile | null> {
  */
 export async function requireProfile(roles: AppRole[]): Promise<Profile> {
   const profile = await getProfile();
-  const loginPath = roles.includes('verifier') && roles.length === 1 ? '/field/login' : '/login';
+  const loginPath = roles.includes('verifier') && roles.length === 1 ? '/verifier/login' : '/login';
   if (!profile) redirect(loginPath);
   if (!roles.includes(profile.role)) {
-    redirect(profile.role === 'verifier' ? '/field' : '/admin');
+    redirect(profile.role === 'verifier' ? '/verifier' : '/admin');
   }
   return profile;
 }

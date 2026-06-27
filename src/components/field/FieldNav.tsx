@@ -6,9 +6,9 @@ import { cn } from '@/lib/cn';
 import { Home, ListChecks, RefreshCw } from 'lucide-react';
 
 const items = [
-  { href: '/field', label: 'Today', icon: Home, exact: true },
-  { href: '/field/tasks', label: 'Tasks', icon: ListChecks, exact: false },
-  { href: '/field/sync', label: 'Sync', icon: RefreshCw, exact: false },
+  { href: '/verifier', label: 'Today', icon: Home, exact: true },
+  { href: '/verifier/tasks', label: 'Tasks', icon: ListChecks, exact: false },
+  { href: '/verifier/sync', label: 'Sync', icon: RefreshCw, exact: false },
 ];
 
 export default function FieldNav() {

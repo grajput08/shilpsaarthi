@@ -70,6 +70,7 @@ export const CRAFT_CATEGORY: Record<CraftCategory, string> = {
 };
 
 export const REGISTRATION_SOURCE: Record<RegistrationSource, string> = {
+  public_link: 'Public Link',
   whatsapp_self: 'WhatsApp Self-Registration',
   call_center: 'Call Center',
   admin_manual: 'Admin (manual)',

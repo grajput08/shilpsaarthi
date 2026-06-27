@@ -27,7 +27,7 @@ export default function SyncStatusBanner() {
 
   return (
     <Link
-      href="/field/sync"
+      href="/verifier/sync"
       data-testid="sync-banner"
       className="mb-4 flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
     >

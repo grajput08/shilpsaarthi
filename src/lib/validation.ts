@@ -19,6 +19,7 @@ const genderEnum = z.enum(['male', 'female', 'other', 'undisclosed']);
 
 /** Public WhatsApp-link self-registration payload (kept intentionally light). */
 export const publicRegistrationSchema = z.object({
+  token: z.string().min(6).max(128).optional(),
   preferred_language: z.string().min(2).max(8).default('en'),
   consent: z.literal(true, {
     errorMap: () => ({ message: 'Consent is required to register.' }),
@@ -40,7 +41,39 @@ export const publicRegistrationSchema = z.object({
 
 export type PublicRegistrationInput = z.infer<typeof publicRegistrationSchema>;
 
-/** Final field-verification decision submitted from the PWA. */
+export const VERIFICATION_ITEM_STATUSES = [
+  'pending',
+  'verified',
+  'corrected',
+  'rejected',
+  'cancelled',
+  'not_applicable',
+] as const;
+
+export const verificationItemSchema = z.object({
+  item_key: z.string().min(1).max(40),
+  item_label: z.string().min(1).max(80),
+  status: z.enum(VERIFICATION_ITEM_STATUSES),
+  note: z.string().max(2000).optional().nullable(),
+  evidence_path: z.string().max(400).optional().nullable(),
+});
+
+/** Editable artisan fields a verifier may correct in the field. */
+export const artisanEditSchema = z
+  .object({
+    full_name: z.string().trim().min(2).max(120).optional(),
+    phone: z.string().regex(PHONE_REGEX).optional().or(z.literal('')),
+    gender: genderEnum.optional(),
+    tribe_community: z.string().max(80).optional(),
+    state: z.string().max(80).optional(),
+    district: z.string().max(80).optional(),
+    block: z.string().max(80).optional(),
+    village: z.string().max(80).optional(),
+    primary_craft: craftEnum.optional(),
+  })
+  .default({});
+
+/** Final field-verification submission from the verifier PWA. */
 export const verificationSubmitSchema = z.object({
   artisan_id: z.string().uuid(),
   client_generated_id: z.string().min(1).max(120),
@@ -53,14 +86,11 @@ export const verificationSubmitSchema = z.object({
   gps_accuracy_m: z.number().min(0).optional().nullable(),
   consent_captured: z.boolean(),
   consent_mode: z.string().max(80).optional().nullable(),
-  identity_verified: z.boolean(),
-  location_verified: z.boolean(),
-  craft_verified: z.boolean(),
-  products_captured: z.boolean(),
-  documents_checked: z.boolean(),
-  duplicate_checked: z.boolean(),
-  market_ready: z.boolean(),
+  market_ready: z.boolean().default(false),
+  fields: artisanEditSchema,
+  items: z.array(verificationItemSchema).max(24).default([]),
   photo_paths: z.array(z.string()).max(10).optional(),
 });
 
+export type VerificationItemInput = z.infer<typeof verificationItemSchema>;
 export type VerificationSubmitInput = z.infer<typeof verificationSubmitSchema>;

@@ -37,7 +37,7 @@ export default function TaskCard({ artisan, cta = 'Start Visit' }: { artisan: Ta
 
       <div className="mt-3 flex items-center gap-2">
         <Link
-          href={`/field/artisans/${artisan.id}`}
+          href={`/verifier/artisans/${artisan.id}`}
           data-testid="task-start"
           className="flex-1 rounded-lg bg-brand-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-brand-700"
         >

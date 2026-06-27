@@ -42,9 +42,35 @@ const initial: FormState = {
   photo_paths: [],
 };
 
-export default function RegistrationForm({ initialLanguage }: { initialLanguage: string }) {
+export interface RegistrationPrefill {
+  full_name?: string;
+  phone?: string;
+  state?: string;
+  district?: string;
+  village?: string;
+  primary_craft?: string;
+}
+
+export default function RegistrationForm({
+  initialLanguage,
+  token,
+  prefill = {},
+}: {
+  initialLanguage: string;
+  token?: string;
+  prefill?: RegistrationPrefill;
+}) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>({ ...initial, preferred_language: initialLanguage });
+  const [form, setForm] = useState<FormState>({
+    ...initial,
+    preferred_language: initialLanguage,
+    full_name: prefill.full_name ?? '',
+    phone: prefill.phone ?? '',
+    state: prefill.state ?? '',
+    district: prefill.district ?? '',
+    village: prefill.village ?? '',
+    primary_craft: (prefill.primary_craft as CraftCategory) ?? '',
+  });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ artisanCode: string | null } | null>(null);
@@ -113,6 +139,7 @@ export default function RegistrationForm({ initialLanguage }: { initialLanguage:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          token,
           gender: form.gender || undefined,
           primary_craft: form.primary_craft,
           consent: form.consent,

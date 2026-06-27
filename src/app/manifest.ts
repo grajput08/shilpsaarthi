@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'ShilpSaarthi — Tribal Artisan CRM',
     short_name: 'ShilpSaarthi',
     description: 'Field verifier PWA and admin CRM for the tribal artisan programme.',
-    start_url: '/field',
+    start_url: '/verifier',
     display: 'standalone',
     background_color: '#f8fafc',
     theme_color: '#a85b18',

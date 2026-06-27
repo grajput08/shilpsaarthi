@@ -19,18 +19,18 @@ export async function adminLogin(page: Page) {
 }
 
 export async function verifierLogin(page: Page) {
-  await page.goto('/field/login');
+  await page.goto('/verifier/login');
   await page.getByTestId('otp-email').fill('verifier@shilpsaarthi.test');
   await page.getByTestId('otp-send').click();
   await expect(page.getByTestId('otp-code')).toBeVisible();
   await page.getByTestId('otp-code').fill('123456');
   await page.getByTestId('otp-verify').click();
-  await page.waitForURL('**/field');
+  await page.waitForURL('**/verifier');
 }
 
 export async function signOut(page: Page) {
   await page.getByTestId('sign-out').first().click();
-  await page.waitForURL('**/');
+  await page.waitForURL((u) => !u.pathname.startsWith('/admin') && !u.pathname.startsWith('/verifier/artisans'));
 }
 
 /** 1x1 transparent PNG for photo-upload tests. */

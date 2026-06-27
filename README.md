@@ -7,12 +7,14 @@
 Identify, onboard, verify and manage tribal artisans — a verified registry with
 photos, craft details, location, documents, products and verification status.
 
-Three surfaces, one Next.js app on Supabase:
+One Next.js app on Supabase, path-separated (single host, one server/deploy):
 
-- **Public WhatsApp-link registration** (`/register`) — mobile-first self-registration.
-- **Field Verifier PWA** (`/field`) — offline-first verification on low-end Android.
-- **Admin CRM Dashboard** (`/admin`) — registry, verification queue, assignments,
-  field team, WhatsApp console, duplicate management, reports/export, audit log.
+- **CRM admin** (`/`, `/dashboard`, `/crm` → `/admin`) — login → registry,
+  verification queue, assignments, field team, **registration links**, WhatsApp
+  console, duplicate management, reports/export, audit log.
+- **Public registration** (`/a/form?id=<token>`) — token-gated, no login, no CRM UI.
+- **Verifier PWA** (`/verifier`, login at `/verifier/login`) — mobile-first,
+  per-field verify/correct/reject/cancel/NA, offline-first; verifier role only.
 
 ## Stack
 
@@ -36,7 +38,7 @@ Demo users share password `Password123!`; field verifiers use mock OTP `123456`.
 | Admin | `admin@shilpsaarthi.test` | `/login` |
 | Operator | `operator@shilpsaarthi.test` | `/login` |
 | District Officer | `officer@shilpsaarthi.test` | `/login` |
-| Field Verifier | `verifier@shilpsaarthi.test` | `/field/login` |
+| Field Verifier | `verifier@shilpsaarthi.test` | `/verifier/login` |
 
 ## Verify
 

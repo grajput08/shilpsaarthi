@@ -26,5 +26,5 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
     .eq('id', user!.id)
     .single();
 
-  redirect(profile?.role === 'verifier' ? '/field' : '/admin');
+  redirect(profile?.role === 'verifier' ? '/verifier' : '/admin');
 }

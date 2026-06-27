@@ -5,6 +5,7 @@ import { signPaths } from '@/lib/storage';
 import { Card, CardHeader, CardBody, Chip, ProgressBar } from '@/components/ui';
 import { ArtisanStatusBadge, DecisionBadge, DocStatusBadge, WhatsappStatusBadge } from '@/components/badges';
 import ArtisanActions from '@/components/admin/ArtisanActions';
+import VerificationItems, { type VItem } from '@/components/admin/VerificationItems';
 import {
   CRAFT_CATEGORY,
   CONSENT_STATUS,
@@ -28,7 +29,7 @@ export default async function AdminArtisanDetail({ params }: { params: { id: str
        addresses(*),
        products(*),
        documents(*),
-       verifications(*, verifier:profiles(full_name)),
+       verifications(*, verifier:profiles(full_name), verification_items(*)),
        whatsapp_messages(*)`,
     )
     .eq('id', params.id)
@@ -50,8 +51,23 @@ export default async function AdminArtisanDetail({ params }: { params: { id: str
   const address = (artisan.addresses as { latitude: number | null; longitude: number | null; gps_captured_at: string | null; address_line: string | null; landmark: string | null; pin_code: string | null }[] | null)?.[0];
   const products = (artisan.products as { id: string; name: string; price_min: number | null; price_max: number | null; photo_paths: string[] }[] | null) ?? [];
   const documents = (artisan.documents as { id: string; doc_type: string; status: string; reference_masked: string | null }[] | null) ?? [];
-  const verifications = (artisan.verifications as { id: string; visit_date: string; decision: string | null; notes: string | null; reason: string | null; latitude: number | null; longitude: number | null; verifier: { full_name: string } | null }[] | null) ?? [];
+  const verifications = (artisan.verifications as {
+    id: string;
+    visit_date: string;
+    decision: string | null;
+    admin_override: boolean | null;
+    notes: string | null;
+    reason: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    created_at: string;
+    verifier: { full_name: string } | null;
+    verification_items: VItem[] | null;
+  }[] | null) ?? [];
   const messages = (artisan.whatsapp_messages as { id: string; body: string; status: string; sent_at: string | null; template_key: string | null }[] | null) ?? [];
+
+  // latest verification (by created_at) for the verification-items panel
+  const latestVerification = [...verifications].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0] ?? null;
 
   const allProductPhotos = products.flatMap((p) => p.photo_paths ?? []);
   const signedProductPhotos = await signPaths('product-photos', allProductPhotos);
@@ -210,6 +226,15 @@ export default async function AdminArtisanDetail({ params }: { params: { id: str
             verifiers={verifiers ?? []}
             templates={templates ?? []}
             canAssign={canAssign}
+          />
+
+          <VerificationItems
+            artisanId={artisan.id}
+            verificationId={latestVerification?.id ?? null}
+            adminOverride={Boolean(latestVerification?.admin_override)}
+            decision={latestVerification?.decision ?? null}
+            items={latestVerification?.verification_items ?? []}
+            canOverride={profile?.role === 'admin'}
           />
 
           <Card data-testid="whatsapp-timeline">

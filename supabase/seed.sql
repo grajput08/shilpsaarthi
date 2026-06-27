@@ -226,3 +226,37 @@ insert into public.audit_logs (entity_type, entity_id, action, actor_id, actor_r
 ('artisan','a1a1a1a1-0000-0000-0000-000000000008','verification_submitted','33333333-3333-3333-3333-333333333333','verifier','{"decision":"verified"}','field_pwa','Field verification completed'),
 ('whatsapp','a1a1a1a1-0000-0000-0000-000000000008','whatsapp_sent','11111111-1111-1111-1111-111111111111','admin','{"template":"verified_confirmation"}','admin','Verified confirmation sent'),
 ('artisan','a1a1a1a1-0000-0000-0000-000000000008','approved','11111111-1111-1111-1111-111111111111','admin','{"status":"verified"}','admin',null);
+
+-- -----------------------------------------------------------------------------
+-- Registration tokens (public links)
+-- -----------------------------------------------------------------------------
+insert into public.registration_tokens (token, status, prefill, created_by) values
+('demo-token-active-0001', 'active', '{}'::jsonb, '11111111-1111-1111-1111-111111111111'),
+('demo-token-prefill-0002', 'active', '{"state":"Madhya Pradesh","district":"Dindori"}'::jsonb, '22222222-2222-2222-2222-222222222222');
+
+-- -----------------------------------------------------------------------------
+-- Verification items for the verified artisan (all clear) and the
+-- needs-correction artisan (one rejected — demonstrates the override rule)
+-- -----------------------------------------------------------------------------
+insert into public.verification_items (verification_id, artisan_id, item_key, item_label, status, verified_by)
+select v.id, v.artisan_id, x.item_key, x.item_label, x.status::public.verification_item_status, v.verifier_id
+from public.verifications v
+cross join (values
+  ('identity','Identity','verified'),
+  ('contact','Contact / phone','verified'),
+  ('address','Address & GPS','verified'),
+  ('craft','Craft','verified'),
+  ('products','Products','verified'),
+  ('documents','Documents','verified')
+) as x(item_key, item_label, status)
+where v.artisan_id = 'a1a1a1a1-0000-0000-0000-000000000008';
+
+insert into public.verification_items (verification_id, artisan_id, item_key, item_label, status, note, verified_by)
+select v.id, v.artisan_id, x.item_key, x.item_label, x.status::public.verification_item_status, x.note, v.verifier_id
+from public.verifications v
+cross join (values
+  ('identity','Identity','verified', null),
+  ('address','Address & GPS','rejected','Address does not match GPS'),
+  ('craft','Craft','verified', null)
+) as x(item_key, item_label, status, note)
+where v.artisan_id = 'a1a1a1a1-0000-0000-0000-000000000009';

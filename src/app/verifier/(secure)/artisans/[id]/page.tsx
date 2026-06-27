@@ -96,7 +96,7 @@ export default async function FieldArtisanPage({ params }: { params: { id: strin
       ) : null}
 
       <Link
-        href={`/field/artisans/${artisan.id}/verify`}
+        href={`/verifier/artisans/${artisan.id}/verify`}
         data-testid="start-verification"
         className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-3 text-base font-semibold text-white hover:bg-brand-700"
       >

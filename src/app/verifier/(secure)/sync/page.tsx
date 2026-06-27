@@ -32,27 +32,9 @@ export default function SyncPage() {
 
   async function retry(draft: VerificationDraft) {
     setBusy(draft.artisanId);
-    const d = draft.data as Record<string, unknown>;
-    const result = await submitVerification({
-      artisan_id: draft.artisanId,
-      client_generated_id: draft.clientGeneratedId,
-      decision: (d.decision as never) || 'revisit_required',
-      reason: (d.reason as string) || null,
-      notes: (d.notes as string) || null,
-      latitude: (d.latitude as number) ?? null,
-      longitude: (d.longitude as number) ?? null,
-      gps_accuracy_m: (d.gps_accuracy_m as number) ?? null,
-      consent_captured: Boolean(d.consent_captured),
-      consent_mode: (d.consent_mode as string) ?? null,
-      identity_verified: Boolean(d.identity_verified),
-      location_verified: Boolean(d.location_verified),
-      craft_verified: Boolean(d.craft_verified),
-      products_captured: Boolean(d.products_captured),
-      documents_checked: Boolean(d.documents_checked),
-      duplicate_checked: Boolean(d.duplicate_checked),
-      market_ready: Boolean(d.market_ready),
-      photo_paths: (d.photo_paths as string[]) ?? [],
-    });
+    // Pending/failed drafts store the full submit payload — retry it as-is.
+    const payload = draft.data as Parameters<typeof submitVerification>[0];
+    const result = await submitVerification(payload);
     if (result.ok) {
       deleteDraft(draft.artisanId);
       setLastSync(new Date().toISOString());
@@ -81,7 +63,7 @@ export default function SyncPage() {
               <CardBody>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <Link href={`/field/artisans/${d.artisanId}/verify`} className="font-semibold text-slate-900 hover:underline">
+                    <Link href={`/verifier/artisans/${d.artisanId}/verify`} className="font-semibold text-slate-900 hover:underline">
                       {d.artisanName}
                     </Link>
                     <p className="text-xs text-slate-500">Updated {relativeTime(d.updatedAt)}</p>
@@ -101,7 +83,7 @@ export default function SyncPage() {
                     {busy === d.artisanId ? 'Syncing…' : 'Retry sync'}
                   </Button>
                 ) : (
-                  <Link href={`/field/artisans/${d.artisanId}/verify`} className="mt-3 inline-block text-sm text-brand-600 hover:underline">
+                  <Link href={`/verifier/artisans/${d.artisanId}/verify`} className="mt-3 inline-block text-sm text-brand-600 hover:underline">
                     Continue draft →
                   </Link>
                 )}

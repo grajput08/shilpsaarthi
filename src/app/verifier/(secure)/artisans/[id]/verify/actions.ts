@@ -10,6 +10,7 @@ import type { ArtisanStatus } from '@/lib/domain';
 export interface SubmitResult {
   ok: boolean;
   error?: string;
+  needsOverride?: boolean;
 }
 
 function decodeDataUrl(dataUrl: string) {
@@ -40,11 +41,20 @@ export async function submitVerification(payload: VerificationSubmitInput): Prom
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Your session expired. Please sign in again.' };
 
-  // Upload captured photos (data URLs) to artisan-photos (RLS: assigned verifier).
+  // 1. Apply field corrections to the artisan (only provided, non-empty values).
+  const edits: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(input.fields ?? {})) {
+    if (v !== undefined && v !== '') edits[k] = v;
+  }
+  if (Object.keys(edits).length > 0) {
+    const { error } = await supabase.from('artisans').update(edits).eq('id', input.artisan_id);
+    if (error) return { ok: false, error: `Could not save field edits: ${error.message}` };
+  }
+
+  // 2. Upload any captured evidence photos.
   const photoPaths: string[] = [];
-  const photos = input.photo_paths ?? [];
-  for (let i = 0; i < photos.length; i++) {
-    const decoded = decodeDataUrl(photos[i]);
+  for (let i = 0; i < (input.photo_paths ?? []).length; i++) {
+    const decoded = decodeDataUrl(input.photo_paths![i]);
     if (!decoded) continue;
     const path = `${input.artisan_id}/verify-${Date.now()}-${i}.${decoded.ext}`;
     const { error: upErr } = await supabase.storage
@@ -53,8 +63,12 @@ export async function submitVerification(payload: VerificationSubmitInput): Prom
     if (!upErr) photoPaths.push(path);
   }
 
-  // Idempotent upsert keyed on the offline client-generated id.
-  const { error: vErr } = await supabase
+  const statusOf = (key: string) => input.items.find((it) => it.item_key === key)?.status;
+  const isClear = (key: string) => statusOf(key) === 'verified' || statusOf(key) === 'corrected';
+
+  // 3. Upsert the verification WITHOUT a final decision first (so the
+  //    verification_items exist before the decision rule is evaluated).
+  const { data: verification, error: vErr } = await supabase
     .from('verifications')
     .upsert(
       {
@@ -68,52 +82,78 @@ export async function submitVerification(payload: VerificationSubmitInput): Prom
         consent_captured: input.consent_captured,
         consent_mode: input.consent_mode ?? null,
         consent_timestamp: input.consent_captured ? new Date().toISOString() : null,
-        identity_verified: input.identity_verified,
-        location_verified: input.location_verified,
-        craft_verified: input.craft_verified,
-        products_captured: input.products_captured,
-        documents_checked: input.documents_checked,
-        duplicate_checked: input.duplicate_checked,
+        identity_verified: isClear('identity'),
+        location_verified: isClear('address'),
+        craft_verified: isClear('craft'),
+        products_captured: isClear('products'),
+        documents_checked: statusOf('documents') !== undefined && statusOf('documents') !== 'pending',
+        duplicate_checked: statusOf('identity') !== undefined,
         market_ready: input.market_ready,
-        decision: input.decision,
+        decision: null,
         reason: input.reason ?? null,
         notes: input.notes ?? null,
         photo_paths: photoPaths,
         sync_status: 'synced',
       },
       { onConflict: 'client_generated_id' },
-    );
-  if (vErr) return { ok: false, error: vErr.message };
+    )
+    .select('id, admin_override')
+    .single();
+  if (vErr || !verification) return { ok: false, error: vErr?.message ?? 'Could not save verification.' };
 
-  // Transition artisan status from the decision.
+  // 4. Replace the per-item statuses.
+  await supabase.from('verification_items').delete().eq('verification_id', verification.id);
+  if (input.items.length > 0) {
+    const { error: iErr } = await supabase.from('verification_items').insert(
+      input.items.map((it) => ({
+        verification_id: verification.id,
+        artisan_id: input.artisan_id,
+        item_key: it.item_key,
+        item_label: it.item_label,
+        status: it.status,
+        note: it.note ?? null,
+        evidence_path: it.evidence_path ?? null,
+        verified_by: user.id,
+      })),
+    );
+    if (iErr) return { ok: false, error: `Could not save verification items: ${iErr.message}` };
+  }
+
+  // 5. Apply the final decision. The DB trigger blocks 'verified' while items are
+  //    rejected/cancelled unless admin_override is set on this verification.
+  const { error: dErr } = await supabase
+    .from('verifications')
+    .update({ decision: input.decision })
+    .eq('id', verification.id);
+  if (dErr) {
+    const blocked = /override|row-level|check_violation|Fully Verified/i.test(dErr.message);
+    return {
+      ok: false,
+      needsOverride: blocked,
+      error: blocked
+        ? 'Some items are rejected/cancelled — this case cannot be marked Fully Verified without an admin override.'
+        : dErr.message,
+    };
+  }
+
+  // 6. Move the artisan to the matching lifecycle status.
   const newStatus: ArtisanStatus =
     input.decision === 'verified'
       ? input.market_ready
         ? 'market_ready'
         : 'verified'
       : (input.decision as ArtisanStatus);
-
   const artisanUpdate: Record<string, unknown> = { status: newStatus };
   if (input.consent_captured) artisanUpdate.consent_status = 'granted';
   await supabase.from('artisans').update(artisanUpdate).eq('id', input.artisan_id);
 
-  // Complete the active assignment for terminal decisions.
-  if (input.decision !== 'revisit_required') {
-    await supabase
-      .from('assignments')
-      .update({ status: 'completed' })
-      .eq('artisan_id', input.artisan_id)
-      .in('status', ['assigned', 'in_progress']);
-  }
-
-  // Mock WhatsApp status update + business audit (service role).
+  // 7. Mock WhatsApp status update + business audit (service role).
   const admin = createAdminClient();
   const { data: artisan } = await admin
     .from('artisans')
     .select('full_name, phone, village, artisan_code, preferred_language')
     .eq('id', input.artisan_id)
     .single();
-
   const templateKey = DECISION_TEMPLATE[input.decision];
   if (artisan && templateKey) {
     const { data: template } = await admin
@@ -148,9 +188,9 @@ export async function submitVerification(payload: VerificationSubmitInput): Prom
     action: 'verification_submitted',
     actorId: user.id,
     actorRole: 'verifier',
-    source: 'field_pwa',
+    source: 'verifier_pwa',
     reason: input.reason ?? null,
-    newValue: { decision: input.decision, status: newStatus },
+    newValue: { decision: input.decision, status: newStatus, items: input.items.length },
   });
 
   return { ok: true };

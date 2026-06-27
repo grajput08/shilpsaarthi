@@ -7,7 +7,7 @@ export const metadata = { title: 'Admin Login · ShilpSaarthi' };
 
 export default async function LoginPage() {
   const profile = await getProfile();
-  if (profile) redirect(profile.role === 'verifier' ? '/field' : '/admin');
+  if (profile) redirect(profile.role === 'verifier' ? '/verifier' : '/admin');
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
@@ -20,7 +20,7 @@ export default async function LoginPage() {
         <LoginForm />
         <p className="mt-4 text-center text-sm text-slate-500">
           Field verifier?{' '}
-          <Link href="/field/login" className="font-medium text-brand-600 hover:underline">
+          <Link href="/verifier/login" className="font-medium text-brand-600 hover:underline">
             Use the field app login
           </Link>
         </p>

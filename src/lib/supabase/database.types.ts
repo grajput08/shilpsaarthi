@@ -615,8 +615,127 @@ export type Database = {
         }
         Relationships: []
       }
+      registration_tokens: {
+        Row: {
+          artisan_id: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          prefill: Json
+          status: Database["public"]["Enums"]["registration_token_status"]
+          token: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          artisan_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          prefill?: Json
+          status?: Database["public"]["Enums"]["registration_token_status"]
+          token: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          artisan_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          prefill?: Json
+          status?: Database["public"]["Enums"]["registration_token_status"]
+          token?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_tokens_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "artisans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registration_tokens_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      verification_items: {
+        Row: {
+          artisan_id: string
+          created_at: string
+          evidence_path: string | null
+          id: string
+          item_key: string
+          item_label: string
+          note: string | null
+          status: Database["public"]["Enums"]["verification_item_status"]
+          updated_at: string
+          verification_id: string
+          verified_by: string | null
+        }
+        Insert: {
+          artisan_id: string
+          created_at?: string
+          evidence_path?: string | null
+          id?: string
+          item_key: string
+          item_label: string
+          note?: string | null
+          status?: Database["public"]["Enums"]["verification_item_status"]
+          updated_at?: string
+          verification_id: string
+          verified_by?: string | null
+        }
+        Update: {
+          artisan_id?: string
+          created_at?: string
+          evidence_path?: string | null
+          id?: string
+          item_key?: string
+          item_label?: string
+          note?: string | null
+          status?: Database["public"]["Enums"]["verification_item_status"]
+          updated_at?: string
+          verification_id?: string
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_items_artisan_id_fkey"
+            columns: ["artisan_id"]
+            isOneToOne: false
+            referencedRelation: "artisans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_items_verification_id_fkey"
+            columns: ["verification_id"]
+            isOneToOne: false
+            referencedRelation: "verifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_items_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verifications: {
         Row: {
+          admin_override: boolean
           artisan_id: string
           assignment_id: string | null
           client_generated_id: string | null
@@ -645,6 +764,7 @@ export type Database = {
           visit_date: string
         }
         Insert: {
+          admin_override?: boolean
           artisan_id: string
           assignment_id?: string | null
           client_generated_id?: string | null
@@ -673,6 +793,7 @@ export type Database = {
           visit_date?: string
         }
         Update: {
+          admin_override?: boolean
           artisan_id?: string
           assignment_id?: string | null
           client_generated_id?: string | null
@@ -1007,6 +1128,8 @@ export type Database = {
         | "csv_import"
         | "ngo"
         | "campaign"
+        | "public_link"
+      registration_token_status: "active" | "used" | "revoked" | "expired"
       sync_status: "synced" | "pending" | "failed"
       verification_decision:
         | "verified"
@@ -1014,6 +1137,13 @@ export type Database = {
         | "revisit_required"
         | "rejected"
         | "duplicate"
+      verification_item_status:
+        | "pending"
+        | "verified"
+        | "corrected"
+        | "rejected"
+        | "cancelled"
+        | "not_applicable"
       whatsapp_status:
         | "queued"
         | "sent"
@@ -1230,7 +1360,9 @@ export const Constants = {
         "csv_import",
         "ngo",
         "campaign",
+        "public_link",
       ],
+      registration_token_status: ["active", "used", "revoked", "expired"],
       sync_status: ["synced", "pending", "failed"],
       verification_decision: [
         "verified",
@@ -1238,6 +1370,14 @@ export const Constants = {
         "revisit_required",
         "rejected",
         "duplicate",
+      ],
+      verification_item_status: [
+        "pending",
+        "verified",
+        "corrected",
+        "rejected",
+        "cancelled",
+        "not_applicable",
       ],
       whatsapp_status: [
         "queued",

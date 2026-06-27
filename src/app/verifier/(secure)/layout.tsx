@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 export default async function FieldLayout({ children }: { children: React.ReactNode }) {
-  const profile = await requireProfile(['verifier', 'admin']);
+  const profile = await requireProfile(['verifier']);
 
   return (
     <div className="pwa mx-auto flex min-h-screen max-w-md flex-col bg-slate-50">

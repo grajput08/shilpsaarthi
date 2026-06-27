@@ -38,5 +38,5 @@ export async function fieldLogin(
   if (error) {
     return { stage: 'verify', email, error: 'Sign-in failed. Make sure this is a registered verifier email.' };
   }
-  redirect('/field');
+  redirect('/verifier');
 }

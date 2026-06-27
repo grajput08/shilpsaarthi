@@ -12,10 +12,12 @@ import {
   Copy,
   BarChart3,
   ScrollText,
+  LinkIcon,
 } from 'lucide-react';
 
 const items = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard, exact: true },
+  { href: '/admin/links', label: 'Registration Links', icon: LinkIcon },
   { href: '/admin/registry', label: 'Artisan Registry', icon: Users },
   { href: '/admin/queue', label: 'Verification Queue', icon: ClipboardList },
   { href: '/admin/assignments', label: 'Assignments', icon: UserCheck },

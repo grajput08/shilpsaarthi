@@ -33,6 +33,22 @@ export async function POST(request: Request) {
   const input = parsed.data;
   const admin = createAdminClient();
 
+  // A valid, active registration token is required for public submissions.
+  if (!input.token) {
+    return NextResponse.json({ error: 'A registration link token is required.' }, { status: 400 });
+  }
+  const { data: tokenRow } = await admin
+    .from('registration_tokens')
+    .select('token, status, expires_at')
+    .eq('token', input.token)
+    .maybeSingle();
+  if (!tokenRow || tokenRow.status !== 'active') {
+    return NextResponse.json({ error: 'This registration link is invalid or already used.' }, { status: 409 });
+  }
+  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
+    return NextResponse.json({ error: 'This registration link has expired.' }, { status: 409 });
+  }
+
   const completeness = computeCompleteness({
     basicComplete: true,
     addressComplete: Boolean(input.state && input.district && input.village),
@@ -54,7 +70,7 @@ export async function POST(request: Request) {
       tribe_community: input.tribe_community || null,
       primary_craft: input.primary_craft,
       status: 'registration_submitted',
-      registration_source: 'whatsapp_self',
+      registration_source: 'public_link',
       consent_status: 'granted',
       preferred_language: input.preferred_language,
       state: input.state,
@@ -110,6 +126,12 @@ export async function POST(request: Request) {
   // 4. transition to Pending Verification (records a status_changed audit via trigger)
   await admin.from('artisans').update({ status: 'pending_verification' }).eq('id', artisan.id);
 
+  // mark the registration token as used and link it to the new artisan
+  await admin
+    .from('registration_tokens')
+    .update({ status: 'used', used_at: new Date().toISOString(), artisan_id: artisan.id })
+    .eq('token', input.token);
+
   // 5. mock WhatsApp confirmation
   const { data: template } = await admin
     .from('whatsapp_templates')
@@ -138,7 +160,7 @@ export async function POST(request: Request) {
     action: 'form_submitted',
     actorRole: 'public',
     source: 'public_registration',
-    newValue: { source: 'whatsapp_self', status: 'pending_verification' },
+    newValue: { source: 'public_link', status: 'pending_verification' },
   });
 
   return NextResponse.json({
