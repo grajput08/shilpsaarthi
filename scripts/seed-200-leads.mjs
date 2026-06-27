@@ -352,6 +352,9 @@ async function fetchFreeImage(url) {
 }
 
 async function uploadImage(bucket, artisanId, folder, index, craft, kind) {
+  if (process.env.SKIP_IMAGES === '1') {
+    return `${artisanId}/${folder}/placeholder-${index}.jpg`;
+  }
   const url = freeImageUrl(kind, craft, index);
   let image;
   try {
@@ -475,12 +478,16 @@ async function clearArtisanData() {
   if (delErr) throw new Error(`clear artisans: ${delErr.message}`);
 
   for (const bucket of ['artisan-photos', 'product-photos', 'document-images']) {
-    const { data: top } = await admin.storage.from(bucket).list('', { limit: 1000 });
-    for (const folder of top ?? []) {
-      const { data: files } = await admin.storage.from(bucket).list(folder.name, { limit: 1000 });
-      if (files?.length) {
-        await admin.storage.from(bucket).remove(files.map((f) => `${folder.name}/${f.name}`));
+    try {
+      const { data: top } = await admin.storage.from(bucket).list('', { limit: 1000 });
+      for (const folder of top ?? []) {
+        const { data: files } = await admin.storage.from(bucket).list(folder.name, { limit: 1000 });
+        if (files?.length) {
+          await admin.storage.from(bucket).remove(files.map((f) => `${folder.name}/${f.name}`));
+        }
       }
+    } catch {
+      // Remote storage listing can fail during bulk re-seed — artisan rows are still cleared below.
     }
   }
 }
