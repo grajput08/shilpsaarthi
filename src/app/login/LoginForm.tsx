@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { signIn, type LoginState } from './actions';
-import { User, Mail, Lock, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -29,24 +29,6 @@ export default function LoginForm() {
 
   return (
     <form action={formAction} className="mt-5 space-y-3">
-      {/* Role selector (UX hint; actual role comes from the account) */}
-      <div className={`${fieldWrap} relative`}>
-        <User className="h-4 w-4 text-slate-400" />
-        <select
-          name="role"
-          defaultValue=""
-          aria-label="Select role"
-          className="w-full appearance-none bg-transparent py-2.5 text-sm text-slate-700 focus:outline-none"
-        >
-          <option value="">Select Role</option>
-          <option value="admin">Administrator</option>
-          <option value="operator">Call-Center Operator</option>
-          <option value="district_officer">District Officer</option>
-          <option value="verifier">Field Verifier</option>
-        </select>
-        <ChevronDown className="pointer-events-none h-4 w-4 text-slate-400" />
-      </div>
-
       <div className={fieldWrap}>
         <Mail className="h-4 w-4 text-slate-400" />
         <input

@@ -79,6 +79,53 @@ export const REGISTRATION_SOURCE: Record<RegistrationSource, string> = {
   campaign: 'Campaign',
 };
 
+/** Onboarding channels shown on the admin dashboard donut chart. */
+export const ONBOARDING_CHANNEL = {
+  assisted: {
+    label: 'Assisted',
+    color: '#1a3b70',
+    sources: ['public_link', 'admin_manual', 'ngo', 'campaign', 'csv_import'] as RegistrationSource[],
+  },
+  ivr: {
+    label: 'IVR',
+    color: '#ff671f',
+    sources: ['call_center'] as RegistrationSource[],
+  },
+  whatsapp: {
+    label: 'WhatsApp',
+    color: '#0f7a06',
+    sources: ['whatsapp_self'] as RegistrationSource[],
+  },
+} as const;
+
+/** Bhashini-supported language count surfaced on the dashboard. */
+export const BHASHINI_LANGUAGES_LIVE = 24;
+
+/** Human-readable labels for language codes in dashboard charts. */
+export const LANGUAGE_LABEL: Record<string, string> = {
+  hi: 'Hindi',
+  or: 'Odia',
+  te: 'Telugu',
+  bn: 'Bengali',
+  mr: 'Marathi',
+  ur: 'Urdu',
+  gu: 'Gujarati',
+  en: 'English',
+  sat: 'Santali',
+  ta: 'Tamil',
+  kn: 'Kannada',
+  ml: 'Malayalam',
+  pa: 'Punjabi',
+  as: 'Assamese',
+};
+
+export function onboardingChannelLabel(source: RegistrationSource): string {
+  for (const channel of Object.values(ONBOARDING_CHANNEL)) {
+    if (channel.sources.includes(source)) return channel.label;
+  }
+  return 'Other';
+}
+
 export const GENDER: Record<Gender, string> = {
   male: 'Male',
   female: 'Female',

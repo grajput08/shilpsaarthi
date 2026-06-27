@@ -1,116 +1,253 @@
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { Stat, Card, CardHeader, CardBody } from '@/components/ui';
+import DashboardHeader from '@/components/admin/DashboardHeader';
+import DashboardMetric from '@/components/admin/DashboardMetric';
 import BarList from '@/components/admin/BarList';
 import DonutChart, { type DonutDatum } from '@/components/admin/DonutChart';
+import AreaTrendChart from '@/components/admin/AreaTrendChart';
+import ColumnChart from '@/components/admin/ColumnChart';
+import DataQualityPanel from '@/components/admin/DataQualityPanel';
+import RecentOnboardingsTable from '@/components/admin/RecentOnboardingsTable';
 import {
-  ARTISAN_STATUS,
-  ARTISAN_STATUS_ORDER,
+  BHASHINI_LANGUAGES_LIVE,
   CRAFT_CATEGORY,
-  REGISTRATION_SOURCE,
+  LANGUAGE_LABEL,
+  ONBOARDING_CHANNEL,
+  OPEN_VERIFICATION_STATUSES,
+  onboardingChannelLabel,
   type ArtisanStatus,
+  type CraftCategory,
+  type RegistrationSource,
 } from '@/lib/domain';
-import { Users, Clock, BadgeCheck, TrendingUp, ChevronRight, ClipboardList, Copy } from 'lucide-react';
+import { FileCheck, Languages, ShieldCheck, Users } from 'lucide-react';
 
-const TONE_HEX: Record<string, string> = {
-  gray: '#94a3b8',
-  blue: '#2563eb',
-  amber: '#f59e0b',
-  green: '#0F7A06',
-  red: '#dc2626',
-  purple: '#7c3aed',
-  teal: '#0d9488',
+type ArtisanRow = {
+  id: string;
+  artisan_code: string | null;
+  full_name: string;
+  consent_status: string;
+  registration_source: string;
+  state: string | null;
+  primary_craft: CraftCategory | null;
+  preferred_language: string;
+  data_completeness: number;
+  status: ArtisanStatus;
+  created_at: string;
+  craft_profiles: { sub_category: string | null } | { sub_category: string | null }[] | null;
 };
 
 export default async function OverviewPage() {
   const supabase = createClient();
-  const { data } = await supabase
-    .from('artisans')
-    .select('status, primary_craft, registration_source, district');
 
-  const artisans = data ?? [];
-  const total = artisans.length;
-  const byStatus = (s: ArtisanStatus) => artisans.filter((a) => a.status === s).length;
+  const [{ data: artisans }, { data: idDocs }, { data: products }, { data: craftProfiles }, { data: duplicates }] =
+    await Promise.all([
+      supabase
+        .from('artisans')
+        .select(
+          'id, artisan_code, full_name, consent_status, registration_source, state, primary_craft, preferred_language, data_completeness, status, created_at, craft_profiles(sub_category)',
+        )
+        .order('created_at', { ascending: false }),
+      supabase.from('documents').select('artisan_id').eq('doc_type', 'id_proof').eq('status', 'available'),
+      supabase.from('products').select('name'),
+      supabase.from('craft_profiles').select('sub_category'),
+      supabase.from('duplicate_candidates').select('status'),
+    ]);
 
-  const verified = byStatus('verified') + byStatus('market_ready');
-  const pending = byStatus('pending_verification');
-  const reachedPipeline = artisans.filter((a) =>
-    ['pending_verification', 'assigned', 'verification_in_progress', 'verified', 'needs_correction', 'revisit_required', 'rejected', 'duplicate', 'market_ready'].includes(a.status),
-  ).length;
-  const completedVerification = verified + byStatus('rejected') + byStatus('duplicate') + byStatus('needs_correction');
-  const verificationRate = reachedPipeline ? Math.round((completedVerification / reachedPipeline) * 100) : 0;
+  const rows = (artisans ?? []) as ArtisanRow[];
+  const total = rows.length;
 
-  const statusDonut: DonutDatum[] = ARTISAN_STATUS_ORDER.map((s) => ({
-    label: ARTISAN_STATUS[s].label,
-    value: byStatus(s),
-    color: TONE_HEX[ARTISAN_STATUS[s].tone] ?? '#94a3b8',
-  }))
-    .filter((d) => d.value > 0)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentCount = rows.filter((a) => new Date(a.created_at) >= thirtyDaysAgo).length;
+
+  const aadhaarVerified = new Set((idDocs ?? []).map((d) => d.artisan_id)).size;
+  const aadhaarPct = total ? Math.round((aadhaarVerified / total) * 100) : 0;
+
+  const consentRecorded = rows.filter((a) => a.consent_status === 'granted').length;
+  const consentPct = total ? Math.round((consentRecorded / total) * 100) : 0;
+
+  const stateData = countBy(rows, (a) => a.state);
+
+  const channelCounts: Record<keyof typeof ONBOARDING_CHANNEL, number> = {
+    assisted: 0,
+    ivr: 0,
+    whatsapp: 0,
+  };
+  for (const a of rows) {
+    const source = a.registration_source as RegistrationSource;
+    for (const [key, channel] of Object.entries(ONBOARDING_CHANNEL) as [
+      keyof typeof ONBOARDING_CHANNEL,
+      (typeof ONBOARDING_CHANNEL)[keyof typeof ONBOARDING_CHANNEL],
+    ][]) {
+      if (channel.sources.includes(source)) {
+        channelCounts[key] += 1;
+        break;
+      }
+    }
+  }
+
+  const onboardingDonut: DonutDatum[] = (
+    Object.entries(ONBOARDING_CHANNEL) as [
+      keyof typeof ONBOARDING_CHANNEL,
+      (typeof ONBOARDING_CHANNEL)[keyof typeof ONBOARDING_CHANNEL],
+    ][]
+  ).map(([key, channel]) => ({
+    label: channel.label,
+    value: channelCounts[key],
+    color: channel.color,
+  }));
+
+  const craftCounts: Record<string, number> = {};
+  for (const p of products ?? []) {
+    const name = p.name?.trim();
+    if (name) craftCounts[name] = (craftCounts[name] ?? 0) + 1;
+  }
+  for (const cp of craftProfiles ?? []) {
+    const name = cp.sub_category?.trim();
+    if (name) craftCounts[name] = (craftCounts[name] ?? 0) + 1;
+  }
+  for (const a of rows) {
+    if (!a.primary_craft) continue;
+    const label = CRAFT_CATEGORY[a.primary_craft];
+    craftCounts[label] = (craftCounts[label] ?? 0) + 1;
+  }
+  const craftData = Object.entries(craftCounts)
+    .map(([label, value]) => ({ label, value }))
     .sort((a, b) => b.value - a.value);
 
-  function distribution(key: 'primary_craft' | 'registration_source' | 'district', labels?: Record<string, string>) {
-    const counts: Record<string, number> = {};
-    for (const a of artisans) {
-      const v = (a[key] as string | null) ?? 'unknown';
-      counts[v] = (counts[v] ?? 0) + 1;
-    }
-    return Object.entries(counts)
-      .map(([k, v]) => ({ label: labels?.[k] ?? k, value: v }))
-      .sort((a, b) => b.value - a.value);
-  }
+  const monthlyData = monthlyOnboardings(rows.map((a) => a.created_at));
+
+  const languageData = countBy(rows, (a) => LANGUAGE_LABEL[a.preferred_language] ?? a.preferred_language.toUpperCase());
+
+  const avgCompleteness = total
+    ? Math.round(rows.reduce((sum, a) => sum + (a.data_completeness ?? 0), 0) / total)
+    : 0;
+
+  const duplicatesResolved = (duplicates ?? []).filter((d) => d.status !== 'open').length;
+  const pendingVerification = rows.filter((a) => OPEN_VERIFICATION_STATUSES.includes(a.status)).length;
+
+  const recentRows = rows.slice(0, 8).map((a) => ({
+    id: a.id,
+    artisanCode: a.artisan_code,
+    name: a.full_name,
+    craft: craftLabel(a),
+    state: a.state,
+    channel: onboardingChannelLabel(a.registration_source as RegistrationSource),
+    date: formatShortDate(a.created_at),
+  }));
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Programme Overview</h1>
-        <p className="mt-1 text-sm text-slate-500">Health of artisan registration and verification at a glance.</p>
-      </header>
+      <DashboardHeader />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Total Artisans" value={total} icon={<Users className="h-4 w-4" />} accent="slate" />
-        <Stat label="Pending Verification" value={pending} icon={<Clock className="h-4 w-4" />} accent="amber" />
-        <Stat label="Verified" value={verified} icon={<BadgeCheck className="h-4 w-4" />} accent="green" />
-        <Stat label="Verification Rate" value={`${verificationRate}%`} icon={<TrendingUp className="h-4 w-4" />} accent="saffron" />
+      <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <DashboardMetric
+          icon={<Users className="h-4 w-4" />}
+          value={total}
+          label="Total artisans profiled"
+          hint={recentCount > 0 ? `↑ ${recentCount} last 30 days` : '↑ last 30 days'}
+        />
+        <DashboardMetric
+          icon={<ShieldCheck className="h-4 w-4" />}
+          value={`${aadhaarPct}%`}
+          label="Aadhaar verified"
+          hint="Target ≥ 90%"
+        />
+        <DashboardMetric
+          icon={<FileCheck className="h-4 w-4" />}
+          value={`${consentPct}%`}
+          label="Consent recorded"
+          hint="DPDP aligned"
+        />
+        <DashboardMetric
+          icon={<Languages className="h-4 w-4" />}
+          value={BHASHINI_LANGUAGES_LIVE}
+          label="Languages live"
+          hint="via Bhashini"
+        />
       </div>
 
-      {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <DonutChart title="Lifecycle status" subtitle="Where artisans are in the pipeline" data={statusDonut} centerLabel="Artisans" />
-        <BarList title="Top crafts" subtitle="By artisan count" data={distribution('primary_craft', CRAFT_CATEGORY)} />
-        <BarList title="Registration source" data={distribution('registration_source', REGISTRATION_SOURCE)} tone="green" />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <BarList title="District clusters" subtitle="Artisans by district" data={distribution('district')} tone="slate" />
+      <div className="grid items-stretch gap-4 lg:grid-cols-3">
+        <div className="h-full lg:col-span-2">
+          <BarList
+            title="Artisans by state"
+            subtitle="Ranked view (map fallback)"
+            data={stateData}
+            tone="navy"
+            max={14}
+          />
         </div>
-        <Card>
-          <CardHeader title="Next actions" />
-          <CardBody className="space-y-2">
-            <ActionRow href="/admin/queue" icon={<ClipboardList className="h-4 w-4" />} title="Assign pending cases" desc={`${pending} awaiting a verifier`} />
-            <ActionRow href="/admin/duplicates" icon={<Copy className="h-4 w-4" />} title="Review duplicates" desc="Resolve flagged records" />
-          </CardBody>
-        </Card>
+        <div className="h-full">
+          <DonutChart title="Onboarding channel" data={onboardingDonut} legend="bottom" showCenter={false} />
+        </div>
       </div>
+
+      <div className="grid items-stretch gap-4 lg:grid-cols-3">
+        <div className="h-full">
+          <BarList title="Top crafts" data={craftData} tone="navy" max={10} />
+        </div>
+        <div className="h-full lg:col-span-2">
+          <AreaTrendChart title="Onboardings per month" data={monthlyData} />
+        </div>
+      </div>
+
+      <div className="grid items-stretch gap-4 lg:grid-cols-3">
+        <div className="h-full lg:col-span-2">
+          <ColumnChart title="Top languages used" data={languageData} tone="green" max={8} />
+        </div>
+        <div className="h-full">
+          <DataQualityPanel
+            title="Data quality"
+            stats={[
+              { value: `${avgCompleteness}%`, label: 'Profile completeness', tone: 'green' },
+              { value: duplicatesResolved, label: 'Duplicates resolved', tone: 'blue' },
+              { value: pendingVerification, label: 'Pending verification', tone: 'red' },
+            ]}
+          />
+        </div>
+      </div>
+
+      <RecentOnboardingsTable title="Recent onboardings" rows={recentRows} />
     </div>
   );
 }
 
-function ActionRow({ href, icon, title, desc }: { href: string; icon: React.ReactNode; title: string; desc: string }) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3 rounded-lg border border-slate-200 p-3 transition-[background-color,border-color] duration-150 hover:border-brand-300 hover:bg-brand-50"
-    >
-      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-slate-800">{title}</span>
-        <span className="block text-xs text-slate-500">{desc}</span>
-      </span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-brand-500" />
-    </Link>
-  );
+function craftLabel(a: ArtisanRow) {
+  const profile = Array.isArray(a.craft_profiles) ? a.craft_profiles[0] : a.craft_profiles;
+  if (profile?.sub_category?.trim()) return profile.sub_category.trim();
+  if (a.primary_craft) return CRAFT_CATEGORY[a.primary_craft];
+  return '—';
+}
+
+function countBy<T>(items: T[], key: (item: T) => string | null | undefined) {
+  const counts: Record<string, number> = {};
+  for (const item of items) {
+    const k = key(item)?.trim();
+    if (!k) continue;
+    counts[k] = (counts[k] ?? 0) + 1;
+  }
+  return Object.entries(counts)
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value);
+}
+
+function monthlyOnboardings(dates: string[]) {
+  const buckets: { label: string; value: number }[] = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const label = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    buckets.push({ label, value: 0 });
+  }
+  for (const created of dates) {
+    const d = new Date(created);
+    const label = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const bucket = buckets.find((b) => b.label === label);
+    if (bucket) bucket.value += 1;
+  }
+  return buckets;
+}
+
+function formatShortDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }

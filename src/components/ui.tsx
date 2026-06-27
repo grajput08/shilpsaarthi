@@ -80,7 +80,7 @@ export function CardHeader({
   return (
     <div className={cn('flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4', className)}>
       <div>
-        <h3 className="text-sm font-semibold tracking-tight text-slate-900">{title}</h3>
+        <h3 className="text-sm font-bold tracking-tight text-[#1a3b70]">{title}</h3>
         {subtitle ? <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p> : null}
       </div>
       {action}
