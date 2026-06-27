@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardBody } from '@/components/ui';
 import { cn } from '@/lib/cn';
+import { formatDashboardCount } from '@/lib/format';
 import {
   DASHBOARD_BODY,
   DASHBOARD_CARD,
@@ -85,7 +86,7 @@ export default function DonutChart({
             </span>
             {legend === 'side' ? (
               <span className={cn('font-semibold tabular-nums text-slate-800', isActive && 'text-slate-900')}>
-                {d.value}
+                {formatDashboardCount(d.value)}
               </span>
             ) : null}
           </li>
@@ -128,7 +129,7 @@ export default function DonutChart({
         {showCenter && !activeSlice ? (
           <g className="rotate-90" style={{ transformOrigin: '80px 80px' }}>
             <text x="80" y="74" textAnchor="middle" className="fill-slate-900 text-[26px] font-bold tabular-nums">
-              {total}
+              {formatDashboardCount(total)}
             </text>
             <text x="80" y="94" textAnchor="middle" className="fill-slate-400 text-[11px] uppercase tracking-wide">
               {centerLabel}
@@ -143,7 +144,7 @@ export default function DonutChart({
             <p className="text-xs font-semibold" style={{ color: activeSlice.color }}>
               {activeSlice.label}
             </p>
-            <p className="text-xl font-bold tabular-nums text-slate-900">{activeSlice.value}</p>
+            <p className="text-xl font-bold tabular-nums text-slate-900">{formatDashboardCount(activeSlice.value)}</p>
             <p className="text-[11px] tabular-nums text-slate-500">
               {Math.round((activeSlice.value / total) * 100)}% of total
             </p>

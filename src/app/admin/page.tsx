@@ -18,6 +18,7 @@ import {
   type CraftCategory,
   type RegistrationSource,
 } from '@/lib/domain';
+import { formatDashboardCount } from '@/lib/format';
 import { FileCheck, Languages, ShieldCheck, Users } from 'lucide-react';
 
 type ArtisanRow = {
@@ -142,9 +143,9 @@ export default async function OverviewPage() {
       <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <DashboardMetric
           icon={<Users className="h-4 w-4" />}
-          value={total}
+          value={formatDashboardCount(total)}
           label="Total artisans profiled"
-          hint={recentCount > 0 ? `↑ ${recentCount} last 30 days` : '↑ last 30 days'}
+          hint={recentCount > 0 ? `↑ ${formatDashboardCount(recentCount)} last 30 days` : '↑ last 30 days'}
         />
         <DashboardMetric
           icon={<ShieldCheck className="h-4 w-4" />}
@@ -199,8 +200,8 @@ export default async function OverviewPage() {
             title="Data quality"
             stats={[
               { value: `${avgCompleteness}%`, label: 'Profile completeness', tone: 'green' },
-              { value: duplicatesResolved, label: 'Duplicates resolved', tone: 'brand' },
-              { value: pendingVerification, label: 'Pending verification', tone: 'red' },
+              { value: formatDashboardCount(duplicatesResolved), label: 'Duplicates resolved', tone: 'brand' },
+              { value: formatDashboardCount(pendingVerification), label: 'Pending verification', tone: 'red' },
             ]}
           />
         </div>

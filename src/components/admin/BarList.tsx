@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardBody } from '@/components/ui';
 import { cn } from '@/lib/cn';
+import { formatDashboardCount } from '@/lib/format';
 import {
   DASHBOARD_BODY,
   DASHBOARD_CARD,
@@ -53,7 +54,7 @@ export default function BarList({
                     {d.label}
                   </span>
                   <span className="font-semibold tabular-nums text-slate-800 transition-colors duration-200 group-hover:text-slate-950 motion-reduce:transition-none">
-                    {d.value}
+                    {formatDashboardCount(d.value)}
                   </span>
                   <div className="col-span-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                     <div

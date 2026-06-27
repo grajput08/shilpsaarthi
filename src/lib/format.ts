@@ -1,5 +1,37 @@
 /** Small presentation helpers shared across the apps. */
 
+/** Demo dashboard: raw DB counts are scaled for ministry-style headline figures (500 → 5L). */
+export const DASHBOARD_COUNT_SCALE = 1000;
+
+const CRORE = 1_00_00_000;
+const LAKH = 1_00_000;
+const THOUSAND = 1_000;
+
+function trimCompactDecimals(value: number, maxDecimals = 2): string {
+  return value
+    .toFixed(maxDecimals)
+    .replace(/\.0+$/, '')
+    .replace(/(\.\d*[1-9])0+$/, '$1');
+}
+
+/** Indian compact notation: 5L, 85K, 1.2Cr */
+export function formatIndianCompact(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= CRORE) return `${trimCompactDecimals(value / CRORE)}Cr`;
+  if (abs >= LAKH) return `${trimCompactDecimals(value / LAKH)}L`;
+  if (abs >= THOUSAND) return `${trimCompactDecimals(value / THOUSAND)}K`;
+  return value.toLocaleString('en-IN');
+}
+
+export function scaleDashboardCount(raw: number): number {
+  return raw * DASHBOARD_COUNT_SCALE;
+}
+
+/** Scale a raw count and format for dashboard display (500 → 5L). */
+export function formatDashboardCount(raw: number): string {
+  return formatIndianCompact(scaleDashboardCount(raw));
+}
+
 export function maskPhone(phone: string | null | undefined): string {
   if (!phone) return '—';
   if (phone.length < 4) return phone;

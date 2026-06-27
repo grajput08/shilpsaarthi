@@ -1,5 +1,31 @@
 import { describe, it, expect } from 'vitest';
-import { maskPhone, computeCompleteness, ageFromDob, haversineKm } from './format';
+import {
+  maskPhone,
+  computeCompleteness,
+  ageFromDob,
+  haversineKm,
+  formatDashboardCount,
+  formatIndianCompact,
+  scaleDashboardCount,
+} from './format';
+
+describe('formatDashboardCount', () => {
+  it('scales raw counts and formats in Indian compact notation', () => {
+    expect(scaleDashboardCount(500)).toBe(500_000);
+    expect(formatDashboardCount(500)).toBe('5L');
+    expect(formatDashboardCount(85)).toBe('85K');
+    expect(formatDashboardCount(159)).toBe('1.59L');
+  });
+});
+
+describe('formatIndianCompact', () => {
+  it('formats crore, lakh, and thousand tiers', () => {
+    expect(formatIndianCompact(1_20_00_000)).toBe('1.2Cr');
+    expect(formatIndianCompact(5_00_000)).toBe('5L');
+    expect(formatIndianCompact(50_000)).toBe('50K');
+    expect(formatIndianCompact(999)).toBe('999');
+  });
+});
 
 describe('maskPhone', () => {
   it('masks all but the last four digits', () => {

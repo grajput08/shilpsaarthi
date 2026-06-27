@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 import { Card, CardHeader, CardBody } from '@/components/ui';
 import { cn } from '@/lib/cn';
+import { formatDashboardCount } from '@/lib/format';
 import { BRAND_PRIMARY } from '@/lib/theme';
 import type { BarDatum } from '@/components/admin/BarList';
 import {
@@ -151,7 +152,7 @@ export default function AreaTrendChart({
                     textAnchor="middle"
                     className="fill-slate-900 text-[13px] font-bold tabular-nums"
                   >
-                    {activePoint.value}
+                    {formatDashboardCount(activePoint.value)}
                   </text>
                   <text
                     x={activePoint.x}

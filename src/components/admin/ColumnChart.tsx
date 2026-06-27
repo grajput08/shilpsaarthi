@@ -1,4 +1,5 @@
 import { Card, CardHeader, CardBody } from '@/components/ui';
+import { formatDashboardCount } from '@/lib/format';
 import { BRAND_PRIMARY, INDIA_GREEN } from '@/lib/theme';
 import type { BarDatum } from '@/components/admin/BarList';
 import {
@@ -43,7 +44,7 @@ export default function ColumnChart({
                 >
                   <div className="relative flex w-full flex-1 items-end">
                     <span className="pointer-events-none absolute -top-5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white opacity-0 shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:opacity-100 motion-reduce:transition-none">
-                      {d.value}
+                      {formatDashboardCount(d.value)}
                     </span>
                     <div
                       className="mx-auto w-full max-w-[2.5rem] rounded-t-md transition-all duration-200 group-hover:-translate-y-1 group-hover:brightness-110 group-hover:shadow-md motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
